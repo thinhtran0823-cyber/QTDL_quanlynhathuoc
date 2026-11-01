@@ -1,0 +1,15 @@
+# Node.js
+node_modules/
+.env
+
+# Java Compilation
+*.class
+bin/
+target/
+out/
+
+# IDE / Editor Files
+.vscode/
+.idea/
+*.iml
+.DS_Store
