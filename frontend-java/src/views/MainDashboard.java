@@ -90,7 +90,7 @@ public class MainDashboard extends JFrame {
         // Tạo các Panel giao diện đại diện cho 4 Module của 4 thành viên
         panelContent.add(new ThongKePanel(), "THONG_KE");
         panelContent.add(taoPanelModule("MAN_HINH_NHAP_KHO", "MODULE 2: QUẢN LÝ KHO & NHẬP HÀNG (TV2)"), "NHAP_KHO");
-        panelContent.add(taoPanelModule("MAN_HINH_BAN_HANG", "MODULE 3: POS BÁN HÀNG & HÓA ĐƠN (TV3)"), "BAN_HANG");
+        panelContent.add(new BanHangPanel(tenDangNhap), "BAN_HANG");
         panelContent.add(taoPanelModule("MAN_HINH_THUOC_KH", "MODULE 4: DỮ LIỆU THUỐC & KHÁCH HÀNG (TV4)"), "THUOC_KH");
         panelContent.add(new DanhMucPanel(), "DANH_MUC");
         panelContent.add(new NhanVienPanel(), "NHAN_VIEN");
