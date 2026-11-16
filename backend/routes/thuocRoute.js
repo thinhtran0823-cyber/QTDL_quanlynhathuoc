@@ -3,7 +3,7 @@ const router = express.Router();
 const { 
     getDanhSachThuoc, createThuoc, updateThuoc, deleteThuoc,
     getDanhSachLoaiThuoc, createLoaiThuoc, updateLoaiThuoc, deleteLoaiThuoc,
-    getDanhSachKhachHang, createKhachHang,
+    getDanhSachKhachHang, createKhachHang, updateKhachHang, deleteKhachHang
 } = require('../controllers/thuocController');
 
 // 1. Nhóm Thuốc
@@ -21,5 +21,7 @@ router.delete('/loai-thuoc/:id', deleteLoaiThuoc);
 // 3. Nhóm Khách Hàng
 router.get('/khach-hang', getDanhSachKhachHang);
 router.post('/khach-hang', createKhachHang);
+router.put('/khach-hang/:id', updateKhachHang);
+router.delete('/khach-hang/:id', deleteKhachHang);
 
 module.exports = router;

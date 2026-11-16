@@ -218,8 +218,36 @@ const createKhachHang = async (req, res) => {
     }
 };
 
+// PUT /api/khach-hang/:id
+const updateKhachHang = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { TenKH, SoDienThoai, DiaChi, DiemTichLuy } = req.body;
+        const [result] = await pool.query(
+            'UPDATE khachhang SET TenKH = ?, SoDienThoai = ?, DiaChi = ?, DiemTichLuy = ? WHERE MaKH = ?',
+            [TenKH, SoDienThoai, DiaChi, DiemTichLuy || 0, id]
+        );
+        if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy khách hàng' });
+        return res.status(200).json({ success: true, message: 'Cập nhật thành công' });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// DELETE /api/khach-hang/:id
+const deleteKhachHang = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [result] = await pool.query('DELETE FROM khachhang WHERE MaKH = ?', [id]);
+        if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy khách hàng' });
+        return res.status(200).json({ success: true, message: 'Xóa thành công' });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     getDanhSachThuoc, createThuoc, updateThuoc, deleteThuoc,
     getDanhSachLoaiThuoc, createLoaiThuoc, updateLoaiThuoc, deleteLoaiThuoc,
-    getDanhSachKhachHang, createKhachHang
+    getDanhSachKhachHang, createKhachHang, updateKhachHang, deleteKhachHang
 };
