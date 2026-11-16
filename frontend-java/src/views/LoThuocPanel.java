@@ -236,18 +236,34 @@ public class LoThuocPanel extends JPanel {
      * Nạp dữ liệu lô thuốc từ server qua GET /api/nhap-kho/lo-thuoc
      */
     public void taiDuLieu() {
-        try {
-            String endpoint = "/nhap-kho/lo-thuoc";
-            int selectedIdx = cbLoc != null ? cbLoc.getSelectedIndex() : 0;
-            if (selectedIdx == 1) {
-                endpoint += "?phanLoai=CON_HAN";
-            } else if (selectedIdx == 2) {
-                endpoint += "?phanLoai=SAP_HET_HAN";
-            } else if (selectedIdx == 3) {
-                endpoint += "?phanLoai=HET_HAN";
+        String endpoint = "/nhap-kho/lo-thuoc";
+        int selectedIdx = cbLoc != null ? cbLoc.getSelectedIndex() : 0;
+        if (selectedIdx == 1) endpoint += "?phanLoai=CON_HAN";
+        else if (selectedIdx == 2) endpoint += "?phanLoai=SAP_HET_HAN";
+        else if (selectedIdx == 3) endpoint += "?phanLoai=HET_HAN";
+
+        final String url = endpoint;
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                return ApiClient.sendGet(url);
             }
 
-            String res = ApiClient.sendGet(endpoint);
+            @Override
+            protected void done() {
+                try {
+                    capNhatBang(get());
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(LoThuocPanel.this,
+                            "Lỗi nạp danh sách lô thuốc: " + e.getMessage(),
+                            "Lỗi kết nối", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    private void capNhatBang(String res) {
+        try {
             modelLoThuoc.setRowCount(0);
 
             int cntTong = 0;

@@ -48,7 +48,7 @@ public class NhapKhoPanel extends JPanel {
     private JButton btnLamMoiLichSu;
 
     // --- Tab 3: Lô thuốc ---
-    private Component panelLoThuoc;
+    private LoThuocPanel panelLoThuoc;
 
     // Bộ định dạng số và ngày
     private final DecimalFormat dfTien = new DecimalFormat("#,###");
@@ -292,38 +292,12 @@ public class NhapKhoPanel extends JPanel {
     // TAB 3: LÔ THUỐC (NẠP ĐỘNG LOTHUOCPANEL)
     // =========================================================================
     private Component taoTabLoThuoc() {
-        try {
-            Class<?> clazz = Class.forName("views.LoThuocPanel");
-            panelLoThuoc = (Component) clazz.getDeclaredConstructor().newInstance();
-            return panelLoThuoc;
-        } catch (Throwable e) {
-            JPanel pnlPlaceholder = new JPanel(new BorderLayout());
-            pnlPlaceholder.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-            JLabel lbl = new JLabel("Module Lô thuốc (LoThuocPanel đang được nạp)", JLabel.CENTER);
-            lbl.setFont(new Font("Arial", Font.BOLD, 15));
-            lbl.setForeground(Color.GRAY);
-            pnlPlaceholder.add(lbl, BorderLayout.CENTER);
-            return pnlPlaceholder;
-        }
+        panelLoThuoc = new LoThuocPanel();
+        return panelLoThuoc;
     }
 
     private void lamMoiLoThuoc() {
-        if (panelLoThuoc != null) {
-            try {
-                java.lang.reflect.Method m = panelLoThuoc.getClass().getMethod("taiDuLieu");
-                m.invoke(panelLoThuoc);
-            } catch (Exception e1) {
-                try {
-                    java.lang.reflect.Method m = panelLoThuoc.getClass().getMethod("taiDuLieuLoThuoc");
-                    m.invoke(panelLoThuoc);
-                } catch (Exception e2) {
-                    try {
-                        java.lang.reflect.Method m = panelLoThuoc.getClass().getMethod("lamMoi");
-                        m.invoke(panelLoThuoc);
-                    } catch (Exception ignored) {}
-                }
-            }
-        }
+        if (panelLoThuoc != null) panelLoThuoc.taiDuLieu();
     }
 
     // =========================================================================
@@ -334,9 +308,32 @@ public class NhapKhoPanel extends JPanel {
      * Nạp dữ liệu các combobox: Nhà cung cấp, Nhân viên, Thuốc
      */
     private void taiDuLieuCombobox() {
-        // 1. Nhà cung cấp: GET /danh-muc/nha-cung-cap
+        new SwingWorker<String[], Void>() {
+            @Override
+            protected String[] doInBackground() throws Exception {
+                return new String[] {
+                        ApiClient.sendGet("/danh-muc/nha-cung-cap"),
+                        ApiClient.sendGet("/nhan-vien"),
+                        ApiClient.sendGet("/thuoc")
+                };
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    String[] responses = get();
+                    napComboboxNhaCungCap(responses[0]);
+                    napComboboxNhanVien(responses[1]);
+                    napComboboxThuoc(responses[2]);
+                } catch (Exception e) {
+                    System.err.println("Lỗi nạp dữ liệu combobox: " + e.getMessage());
+                }
+            }
+        }.execute();
+    }
+
+    private void napComboboxNhaCungCap(String res) {
         try {
-            String res = ApiClient.sendGet("/danh-muc/nha-cung-cap");
             cbNCC.removeAllItems();
             if (res.contains("\"success\":true")) {
                 String[] items = res.split("\\}\\,\\{");
@@ -351,10 +348,10 @@ public class NhapKhoPanel extends JPanel {
         } catch (Exception e) {
             System.err.println("Lỗi nạp danh sách Nhà cung cấp: " + e.getMessage());
         }
+    }
 
-        // 2. Nhân viên: GET /nhan-vien
+    private void napComboboxNhanVien(String res) {
         try {
-            String res = ApiClient.sendGet("/nhan-vien");
             cbNhanVien.removeAllItems();
             if (res.contains("\"success\":true")) {
                 String[] items = res.split("\\}\\,\\{");
@@ -369,10 +366,10 @@ public class NhapKhoPanel extends JPanel {
         } catch (Exception e) {
             System.err.println("Lỗi nạp danh sách Nhân viên: " + e.getMessage());
         }
+    }
 
-        // 3. Thuốc: GET /thuoc
+    private void napComboboxThuoc(String res) {
         try {
-            String res = ApiClient.sendGet("/thuoc");
             cbThuoc.removeAllItems();
             if (res.contains("\"success\":true")) {
                 String[] items = res.split("\\}\\,\\{");
@@ -400,8 +397,25 @@ public class NhapKhoPanel extends JPanel {
      * Nạp bảng Lịch sử phiếu nhập: GET /nhap-kho/phieu-nhap
      */
     private void taiLichSuPhieuNhap() {
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                return ApiClient.sendGet("/nhap-kho/phieu-nhap");
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    hienThiLichSu(get());
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(NhapKhoPanel.this, "Lỗi kết nối máy chủ khi nạp lịch sử phiếu nhập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    private void hienThiLichSu(String res) {
         try {
-            String res = ApiClient.sendGet("/nhap-kho/phieu-nhap");
             modelLichSu.setRowCount(0);
             if (res.contains("\"success\":true")) {
                 String[] items = res.split("\\}\\,\\{");
@@ -435,7 +449,7 @@ public class NhapKhoPanel extends JPanel {
                 }
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi kết nối máy chủ khi nạp lịch sử phiếu nhập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Không thể đọc dữ liệu lịch sử phiếu nhập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -450,11 +464,6 @@ public class NhapKhoPanel extends JPanel {
         }
 
         String soLo = txtSoLo.getText().trim();
-        if (soLo.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập số lô!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-            txtSoLo.requestFocus();
-            return;
-        }
 
         String ngaySX = txtNgaySanXuat.getText().trim();
         if (!ngaySX.isEmpty() && !kiemTraDinhDangNgay(ngaySX)) {
@@ -492,25 +501,10 @@ public class NhapKhoPanel extends JPanel {
         double giaNhap;
         try {
             giaNhap = Double.parseDouble(txtGiaNhap.getText().trim());
-            if (giaNhap < 0) {
-                JOptionPane.showMessageDialog(this, "Giá nhập không được âm (>= 0)!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                txtGiaNhap.requestFocus();
-                return;
-            }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Giá nhập không hợp lệ! Vui lòng nhập số.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             txtGiaNhap.requestFocus();
             return;
-        }
-
-        // Kiểm tra xem số lô của thuốc này đã tồn tại trong bảng tạm chưa
-        for (int i = 0; i < modelChiTietTam.getRowCount(); i++) {
-            int maThuocHienTai = Integer.parseInt(modelChiTietTam.getValueAt(i, 0).toString());
-            String soLoHienTai = modelChiTietTam.getValueAt(i, 2).toString().trim();
-            if (maThuocHienTai == thuoc.maThuoc && soLoHienTai.equalsIgnoreCase(soLo)) {
-                JOptionPane.showMessageDialog(this, "Số lô \"" + soLo + "\" đã có trong danh sách chi tiết của thuốc này!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
         }
 
         double thanhTien = soLuong * giaNhap;
@@ -617,9 +611,9 @@ public class NhapKhoPanel extends JPanel {
         for (int i = 0; i < modelChiTietTam.getRowCount(); i++) {
             if (i > 0) sb.append(",");
             int maThuoc = Integer.parseInt(modelChiTietTam.getValueAt(i, 0).toString());
-            String soLo = escapeJson(modelChiTietTam.getValueAt(i, 2).toString().trim());
+            String soLo = esc(modelChiTietTam.getValueAt(i, 2).toString().trim());
             String nsx = modelChiTietTam.getValueAt(i, 3).toString().trim();
-            String hsd = escapeJson(modelChiTietTam.getValueAt(i, 4).toString().trim());
+            String hsd = esc(modelChiTietTam.getValueAt(i, 4).toString().trim());
             int sl = Integer.parseInt(modelChiTietTam.getValueAt(i, 5).toString().trim());
             String giaStr = modelChiTietTam.getValueAt(i, 6).toString().replaceAll("[^0-9.]", "").trim();
             double gia = Double.parseDouble(giaStr);
@@ -630,7 +624,7 @@ public class NhapKhoPanel extends JPanel {
             if (nsx.isEmpty()) {
                 sb.append("\"ngaySanXuat\":null,");
             } else {
-                sb.append("\"ngaySanXuat\":\"").append(escapeJson(nsx)).append("\",");
+                sb.append("\"ngaySanXuat\":\"").append(esc(nsx)).append("\",");
             }
             sb.append("\"hanSuDung\":\"").append(hsd).append("\",");
             sb.append("\"soLuong\":").append(sl).append(",");
@@ -639,8 +633,19 @@ public class NhapKhoPanel extends JPanel {
         }
         sb.append("]}");
 
-        try {
-            String res = ApiClient.sendPost("/nhap-kho/phieu-nhap", sb.toString());
+        final String requestBody = sb.toString();
+        btnLuuPhieu.setEnabled(false);
+        new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                return ApiClient.sendPost("/nhap-kho/phieu-nhap", requestBody);
+            }
+
+            @Override
+            protected void done() {
+                btnLuuPhieu.setEnabled(true);
+                try {
+                    String res = get();
             if (res.contains("\"success\":true")) {
                 String maPN = extractVal(res, "MaPN");
                 if (maPN.isEmpty()) maPN = extractVal(res, "maPN");
@@ -649,7 +654,7 @@ public class NhapKhoPanel extends JPanel {
                 if (!maPN.isEmpty()) {
                     msg += " (Mã phiếu: " + maPN + ")";
                 }
-                JOptionPane.showMessageDialog(this, msg, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(NhapKhoPanel.this, msg, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
 
                 // Xóa bảng tạm và làm mới dữ liệu
                 modelChiTietTam.setRowCount(0);
@@ -663,11 +668,13 @@ public class NhapKhoPanel extends JPanel {
                 // Hiển thị chính xác thông báo lỗi từ máy chủ / trigger SQLSTATE 45000
                 String msg = extractVal(res, "message");
                 if (msg.isEmpty()) msg = "Tạo phiếu nhập thất bại!";
-                JOptionPane.showMessageDialog(this, msg, "Lỗi từ máy chủ", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(NhapKhoPanel.this, msg, "Lỗi từ máy chủ", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi kết nối máy chủ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(NhapKhoPanel.this, "Lỗi kết nối máy chủ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
 
     // =========================================================================
@@ -712,7 +719,7 @@ public class NhapKhoPanel extends JPanel {
         }
     }
 
-    private String escapeJson(String s) {
+    private String esc(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }

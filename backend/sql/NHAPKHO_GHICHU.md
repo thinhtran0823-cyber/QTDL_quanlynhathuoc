@@ -56,3 +56,12 @@
 
 ### 3.4. Về thông tin nhân viên (`MaNV`):
 - `MainDashboard.java` hiện chưa truyền `MaNV` phiên đăng nhập sang các panel module. Vì vậy, trên màn hình Swing lập phiếu nhập sẽ cung cấp combobox chọn "Nhân viên lập phiếu" từ API `GET /api/nhan-vien`.
+
+## 4. Mâu thuẫn và đề xuất
+
+- `quanlynhathuoc.sql` khai báo tên bảng chữ thường (`nhanvien`, `phieunhap`, `thuoc`, `lothuoc`, `chitietphieunhap`, `nhacungcap`), trong khi code nhóm dùng PascalCase. Trên Linux với `lower_case_table_names=0`, tên bảng có thể phân biệt hoa thường; cần thống nhất cấu hình hoặc tên truy vấn trước khi triển khai.
+- `MainDashboard` không truyền `MaNV` vào màn hình Nhập kho, nên màn hình dùng combobox nhân viên từ API.
+- API nhà cung cấp trả `MaNCC`, `TenNCC`; API thuốc trả `MaThuoc`, `TenThuoc`, `GiaNhap`; API nhân viên trả `MaNV`, `HoTen`. Tên trường khớp với phần đọc JSON của màn hình Swing.
+- Schema mẫu có `MaThuoc=1`, `MaNCC=1`, `MaNV=3` đang hoạt động. Giá trị tồn trong dump không khớp tổng số lượng các lô hiện có; ca nhập hợp lệ kiểm tra phần chênh lệch trước/sau trong cùng transaction.
+- Các API nhân viên hiện tại không lọc trạng thái; trigger vẫn từ chối nhân viên nghỉ việc. Controller ngoài module Nhập kho không thuộc phạm vi chỉnh sửa.
+- `MainDashboard` có dòng thêm `btnNhapKho` vào sidebar lặp lại; theo phạm vi bàn giao chỉ kiểm tra dòng chuyển panel, không chỉnh phần sidebar.

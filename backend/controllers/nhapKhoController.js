@@ -34,8 +34,9 @@ const taoPhieuNhap = async (req, res) => {
         });
     }
 
-    const connection = await pool.getConnection();
+    let connection;
     try {
+        connection = await pool.getConnection();
         await connection.beginTransaction();
 
         // 1. Tạo phiếu nhập mới (trigger trg_PN_BI_KiemTra kiểm tra nhân viên và gán NgayNhap)
@@ -73,7 +74,7 @@ const taoPhieuNhap = async (req, res) => {
 
         // Lấy lại thông tin phiếu nhập vừa tạo (đã có TongTien do trigger cập nhật)
         const [rowsPN] = await connection.query(
-            'SELECT MaPN, MaNCC, MaNV, NgayNhap, TongTien FROM PhieuNhap WHERE MaPN = ?',
+            "SELECT MaPN, MaNCC, MaNV, DATE_FORMAT(NgayNhap, '%Y-%m-%d') AS NgayNhap, TongTien FROM PhieuNhap WHERE MaPN = ?",
             [maPN]
         );
 
@@ -85,7 +86,9 @@ const taoPhieuNhap = async (req, res) => {
             data: rowsPN[0] || { maPN }
         });
     } catch (error) {
-        await connection.rollback();
+        if (connection) {
+            try { await connection.rollback(); } catch (rollbackError) { /* Giữ lỗi gốc để trả đúng mã lỗi. */ }
+        }
 
         // Lỗi do Trigger ném qua SIGNAL SQLSTATE '45000' (errno 1644)
         if (error.sqlState === '45000' || error.errno === 1644) {
@@ -102,7 +105,7 @@ const taoPhieuNhap = async (req, res) => {
             data: null
         });
     } finally {
-        connection.release();
+        if (connection) connection.release();
     }
 };
 
@@ -116,13 +119,13 @@ const getPhieuNhap = async (req, res) => {
         const querySQL = `
             SELECT 
                 pn.MaPN,
-                pn.NgayNhap,
+                DATE_FORMAT(pn.NgayNhap, '%Y-%m-%d') AS NgayNhap,
                 ncc.TenNCC,
                 nv.HoTen,
                 pn.TongTien,
                 t.TenThuoc,
                 lt.SoLo,
-                lt.HanSuDung,
+                DATE_FORMAT(lt.HanSuDung, '%Y-%m-%d') AS HanSuDung,
                 ctpn.SoLuongNhap,
                 ctpn.DonGiaNhap,
                 ctpn.ThanhTien
@@ -157,7 +160,11 @@ const getPhieuNhap = async (req, res) => {
 const getLoThuoc = async (req, res) => {
     try {
         const { phanLoai } = req.query;
-        let querySQL = 'SELECT * FROM v_LoThuoc_TinhTrang';
+        let querySQL = `SELECT MaLo, MaThuoc, TenThuoc, SoLo,
+                               DATE_FORMAT(NgaySanXuat, '%Y-%m-%d') AS NgaySanXuat,
+                               DATE_FORMAT(HanSuDung, '%Y-%m-%d') AS HanSuDung,
+                               SoLuongTon, GiaNhap, SoNgayConLai, PhanLoai
+                        FROM v_LoThuoc_TinhTrang`;
         const params = [];
 
         if (phanLoai) {

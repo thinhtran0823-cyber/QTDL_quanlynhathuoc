@@ -8,7 +8,6 @@ const {
 
 // Route quản lý phiếu nhập kho
 router.post('/phieu-nhap', taoPhieuNhap);
-router.post('/', taoPhieuNhap); // Đường dẫn tương thích ngược
 router.get('/phieu-nhap', getPhieuNhap);
 
 // Route tra cứu tình trạng hạn sử dụng lô thuốc
