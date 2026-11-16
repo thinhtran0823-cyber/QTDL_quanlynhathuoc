@@ -11,6 +11,15 @@
 - `backend/sql/nhapkho_triggers.sql`: Chứa 5 triggers nghiệp vụ kiểm tra và cập nhật tự động (chuẩn bài thực hành TH3) và 1 view `v_LoThuoc_TinhTrang` phân loại hạn sử dụng lô thuốc.
 - `backend/sql/nhapkho_test.sql`: File chứa các kịch bản kiểm thử thủ công (chạy tay trong MySQL Workbench/DBeaver) có bọc `START TRANSACTION ... ROLLBACK`.
 - `backend/sql/NHAPKHO_GHICHU.md`: Tài liệu ghi chú bàn giao kỹ thuật, thứ tự chạy và lưu ý tích hợp.
+- `frontend-java/src/views/NhapKhoPanel.java`: Màn hình Swing Quản lý Nhập Kho (3 tab: Lập phiếu nhập, Lịch sử phiếu nhập, Lô thuốc).
+- `frontend-java/src/views/LoThuocPanel.java`: Màn hình Swing Theo dõi Lô Thuốc (lọc hạn dùng, tô màu cảnh báo theo dòng).
+
+### File viết lại toàn bộ:
+- `backend/controllers/nhapKhoController.js`: Controller xử lý transaction tạo phiếu nhập và các endpoint lấy phiếu nhập, lô thuốc.
+- `backend/routes/nhapKhoRoute.js`: Khai báo 3 route Express cho module Nhập kho.
+
+### File sửa đúng một dòng:
+- `frontend-java/src/views/MainDashboard.java`: Thay thế placeholder màn hình nhập kho bằng `new NhapKhoPanel()`.
 
 ---
 

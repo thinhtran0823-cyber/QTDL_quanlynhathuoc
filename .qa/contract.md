@@ -1,0 +1,4 @@
+# Hợp đồng project
+- generic: {"files": [".gitignore", "AGENTS.md", "B2308394_TranMaiPhucThinh_TH1.pdf", "CT467-Nhom6.pptx", "KhoiTao.sql", "KhoiTaoCSDL.sql", "QTDL-Buoi1.docx", "Readme.txt", "SoDoCSDL.jpg", "backend/.env.example", "backend/.gitinogre", "backend/config/db.js", "backend/controllers/authController.js", "backend/controllers/banHangController.js", "backend/controllers/danhMucController.js", "backend/controllers/nh
+- python: {"modules": {"backend/hello.py": []}}
+- data: {"skills-lock.json": {"keys": ["skills", "version"]}, "backend/package.json": {"keys": ["author", "dependencies", "description", "devDependencies", "keywords", "license", "main", "name", "scripts", "type", "version"]}, "backend/package-lock.json": {"keys": ["lockfileVersion", "name", "packages", "requires", "version"]}}

@@ -1,0 +1,259 @@
+{
+  "status": "passed",
+  "level_reached": 3,
+  "required_level": 3,
+  "plugins": [
+    "generic",
+    "python",
+    "data"
+  ],
+  "gates": [
+    {
+      "id": "GEN-OUTPUT",
+      "name": "File đầu ra",
+      "level": 0,
+      "status": "pass",
+      "issues": [],
+      "evidence": null
+    },
+    {
+      "id": "GEN-SAFETY",
+      "name": "Placeholder và secret",
+      "level": 1,
+      "status": "pass",
+      "issues": [],
+      "evidence": null
+    },
+    {
+      "id": "G-ECHO",
+      "name": "Không chép phản hồi vào mã",
+      "level": 1,
+      "status": "pass",
+      "issues": [],
+      "evidence": null
+    },
+    {
+      "id": "GEN-LINKS",
+      "name": "Liên kết tài liệu",
+      "level": 1,
+      "status": "pass",
+      "issues": [],
+      "evidence": null
+    },
+    {
+      "id": "PY-SYNTAX",
+      "name": "Python syntax",
+      "level": 0,
+      "status": "pass",
+      "issues": [],
+      "evidence": null
+    },
+    {
+      "id": "PY-IMPORTS",
+      "name": "Imports và symbol nội bộ",
+      "level": 1,
+      "status": "pass",
+      "issues": [],
+      "evidence": null
+    },
+    {
+      "id": "PY-RUN",
+      "name": "Chạy import/CLI/tests trong sandbox",
+      "level": 2,
+      "status": "pass",
+      "issues": [],
+      "evidence": null
+    },
+    {
+      "id": "DATA-PARSE",
+      "name": "Parse dữ liệu",
+      "level": 0,
+      "status": "pass",
+      "issues": [],
+      "evidence": null
+    },
+    {
+      "id": "DATA-SHAPE",
+      "name": "Cột và giá trị dữ liệu",
+      "level": 1,
+      "status": "pass",
+      "issues": [],
+      "evidence": null
+    },
+    {
+      "id": "DATA-LOAD",
+      "name": "Nạp dữ liệu trong sandbox",
+      "level": 2,
+      "status": "pass",
+      "issues": [],
+      "evidence": null
+    },
+    {
+      "id": "AC-1",
+      "name": "Acceptance",
+      "level": 3,
+      "status": "pass",
+      "issues": [],
+      "evidence": "/KINGSTON/Github/AI_Agent/projects/0020-quanlynhathuoc-modulenhapkho/backend/sql/nhapkho_triggers.sql"
+    },
+    {
+      "id": "AC-2",
+      "name": "Acceptance",
+      "level": 3,
+      "status": "pass",
+      "issues": [],
+      "evidence": "/KINGSTON/Github/AI_Agent/projects/0020-quanlynhathuoc-modulenhapkho/backend/sql/nhapkho_test.sql"
+    },
+    {
+      "id": "AC-3",
+      "name": "Acceptance",
+      "level": 3,
+      "status": "pass",
+      "issues": [],
+      "evidence": "/KINGSTON/Github/AI_Agent/projects/0020-quanlynhathuoc-modulenhapkho/backend/controllers/nhapKhoController.js"
+    },
+    {
+      "id": "AC-4",
+      "name": "Acceptance",
+      "level": 3,
+      "status": "pass",
+      "issues": [],
+      "evidence": "/KINGSTON/Github/AI_Agent/projects/0020-quanlynhathuoc-modulenhapkho/backend/routes/nhapKhoRoute.js"
+    },
+    {
+      "id": "AC-5",
+      "name": "Acceptance",
+      "level": 3,
+      "status": "pass",
+      "issues": [],
+      "evidence": "/KINGSTON/Github/AI_Agent/projects/0020-quanlynhathuoc-modulenhapkho/backend/sql/NHAPKHO_GHICHU.md"
+    }
+  ],
+  "missing": [],
+  "acceptance": {
+    "criteria": [
+      {
+        "id": "AC-1",
+        "status": "pass",
+        "evidence": "/KINGSTON/Github/AI_Agent/projects/0020-quanlynhathuoc-modulenhapkho/backend/sql/nhapkho_triggers.sql",
+        "issues": []
+      },
+      {
+        "id": "AC-2",
+        "status": "pass",
+        "evidence": "/KINGSTON/Github/AI_Agent/projects/0020-quanlynhathuoc-modulenhapkho/backend/sql/nhapkho_test.sql",
+        "issues": []
+      },
+      {
+        "id": "AC-3",
+        "status": "pass",
+        "evidence": "/KINGSTON/Github/AI_Agent/projects/0020-quanlynhathuoc-modulenhapkho/backend/controllers/nhapKhoController.js",
+        "issues": []
+      },
+      {
+        "id": "AC-4",
+        "status": "pass",
+        "evidence": "/KINGSTON/Github/AI_Agent/projects/0020-quanlynhathuoc-modulenhapkho/backend/routes/nhapKhoRoute.js",
+        "issues": []
+      },
+      {
+        "id": "AC-5",
+        "status": "pass",
+        "evidence": "/KINGSTON/Github/AI_Agent/projects/0020-quanlynhathuoc-modulenhapkho/backend/sql/NHAPKHO_GHICHU.md",
+        "issues": []
+      }
+    ],
+    "passed": true,
+    "command_results": {}
+  },
+  "contracts": {
+    "generic": {
+      "files": [
+        ".gitignore",
+        "AGENTS.md",
+        "B2308394_TranMaiPhucThinh_TH1.pdf",
+        "CT467-Nhom6.pptx",
+        "KhoiTao.sql",
+        "KhoiTaoCSDL.sql",
+        "QTDL-Buoi1.docx",
+        "Readme.txt",
+        "SoDoCSDL.jpg",
+        "backend/.env.example",
+        "backend/.gitinogre",
+        "backend/config/db.js",
+        "backend/controllers/authController.js",
+        "backend/controllers/banHangController.js",
+        "backend/controllers/danhMucController.js",
+        "backend/controllers/nhanVienController.js",
+        "backend/controllers/nhapKhoController.js",
+        "backend/controllers/thongKeController.js",
+        "backend/controllers/thuocController.js",
+        "backend/hello.py",
+        "backend/package-lock.json",
+        "backend/package.json",
+        "backend/routes/authRoute.js",
+        "backend/routes/banHangRoute.js",
+        "backend/routes/danhMucRoute.js",
+        "backend/routes/nhanVienRoute.js",
+        "backend/routes/nhapKhoRoute.js",
+        "backend/routes/thongKeRoute.js",
+        "backend/routes/thuocRoute.js",
+        "backend/server.js",
+        "backend/sql/NHAPKHO_GHICHU.md",
+        "backend/sql/nhapkho_test.sql",
+        "backend/sql/nhapkho_triggers.sql",
+        "frontend-java/src/utils/ApiClient.class",
+        "frontend-java/src/utils/ApiClient.java",
+        "frontend-java/src/views/DanhMucPanel.java",
+        "frontend-java/src/views/LoThuocPanel.java",
+        "frontend-java/src/views/LoginForm.java",
+        "frontend-java/src/views/MainDashboard.java",
+        "frontend-java/src/views/NhanVienPanel.java",
+        "frontend-java/src/views/NhapKhoPanel.java",
+        "frontend-java/src/views/ThongKePanel.java",
+        "quanlynhathuoc.sql",
+        "skills-lock.json",
+        "views/LoThuocPanel.java",
+        "views/MainDashboard.java",
+        "views/NhapKhoPanel.java"
+      ]
+    },
+    "python": {
+      "modules": {
+        "backend/hello.py": []
+      }
+    },
+    "data": {
+      "skills-lock.json": {
+        "keys": [
+          "skills",
+          "version"
+        ]
+      },
+      "backend/package.json": {
+        "keys": [
+          "author",
+          "dependencies",
+          "description",
+          "devDependencies",
+          "keywords",
+          "license",
+          "main",
+          "name",
+          "scripts",
+          "type",
+          "version"
+        ]
+      },
+      "backend/package-lock.json": {
+        "keys": [
+          "lockfileVersion",
+          "name",
+          "packages",
+          "requires",
+          "version"
+        ]
+      }
+    }
+  }
+}
