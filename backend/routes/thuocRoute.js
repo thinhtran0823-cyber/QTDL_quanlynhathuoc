@@ -7,10 +7,10 @@ const {
 } = require('../controllers/thuocController');
 
 // 1. Nhóm Thuốc
-router.get('/danh-sach-thuoc', getDanhSachThuoc);
-router.post('/tao-thuoc', createThuoc);
-router.put('/:id', updateThuoc);
-router.delete('/:id', deleteThuoc);
+router.get('/thuoc', getDanhSachThuoc);
+router.post('/thuoc', createThuoc);
+router.put('/thuoc/:id', updateThuoc);
+router.delete('/thuoc/:id', deleteThuoc);
 
 // 2. Nhóm Loại Thuốc
 router.get('/loai-thuoc', getDanhSachLoaiThuoc);
