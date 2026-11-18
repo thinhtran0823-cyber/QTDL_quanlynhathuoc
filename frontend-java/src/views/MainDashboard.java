@@ -89,9 +89,20 @@ public class MainDashboard extends JFrame {
 
         // Tạo các Panel giao diện đại diện cho 4 Module của 4 thành viên
         panelContent.add(new ThongKePanel(), "THONG_KE");
+<<<<<<< HEAD
         panelContent.add(taoPanelModule("MAN_HINH_NHAP_KHO", "MODULE 2: QUẢN LÝ KHO & NHẬP HÀNG (TV2)"), "NHAP_KHO");
         panelContent.add(new BanHangPanel(tenDangNhap), "BAN_HANG");
         panelContent.add(taoPanelModule("MAN_HINH_THUOC_KH", "MODULE 4: DỮ LIỆU THUỐC & KHÁCH HÀNG (TV4)"), "THUOC_KH");
+=======
+        panelContent.add(new NhapKhoPanel(), "NHAP_KHO");
+        panelContent.add(taoPanelModule("MAN_HINH_BAN_HANG", "MODULE 3: POS BÁN HÀNG & HÓA ĐƠN (TV3)"), "BAN_HANG");
+        // Tạo tabbed pane cho quản lý Thuốc và Khách hàng
+        JTabbedPane tabThuocVaKH = new JTabbedPane();
+        tabThuocVaKH.setFont(new Font("Arial", Font.BOLD, 14));
+        tabThuocVaKH.addTab(" Quản lý Thuốc & Loại Thuốc ", new ThuocPanel());
+        tabThuocVaKH.addTab(" Quản lý Khách Hàng ", new KhachHangPanel());
+        panelContent.add(tabThuocVaKH, "THUOC_KH");
+>>>>>>> 12691a0b6d42f9f89c151e65a83c2e5c5d508dbf
         panelContent.add(new DanhMucPanel(), "DANH_MUC");
         panelContent.add(new NhanVienPanel(), "NHAN_VIEN");
         add(panelContent, BorderLayout.CENTER);

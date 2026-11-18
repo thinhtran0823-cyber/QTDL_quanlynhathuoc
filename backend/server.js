@@ -28,7 +28,7 @@ app.use('/api/auth', authRoute);
 app.use('/api/thong-ke', thongKeRoute);
 app.use('/api/nhap-kho', nhapKhoRoute); //TV2
 app.use('/api/ban-hang', banHangRoute); //TV3
-app.use('/api/thuoc', thuocRoute); //TV4
+app.use('/api', thuocRoute); //TV4
 app.use('/api/danh-muc', danhMucRoute);
 app.use('/api/nhan-vien', nhanVienRoute);
 
