@@ -31,16 +31,16 @@ public class NhanVienPanel extends JPanel {
 
         pnlForm.add(new JLabel("Mã NV:"));
         pnlForm.add(txtMaNV);
-        pnlForm.add(new JLabel("Họ và Tên:"));
+        pnlForm.add(new JLabel("Họ và Tên (*):"));
         pnlForm.add(txtHoTen);
         pnlForm.add(new JLabel("Chức Vụ:"));
         pnlForm.add(cbChucVu);
         pnlForm.add(new JLabel("Số Điện Thoại:"));
         pnlForm.add(txtSDT);
 
-        pnlForm.add(new JLabel("Tên Đăng Nhập:"));
+        pnlForm.add(new JLabel("Tên Đăng Nhập (*):"));
         pnlForm.add(txtTenDangNhap);
-        pnlForm.add(new JLabel("Mật Khẩu:"));
+        pnlForm.add(new JLabel("Mật Khẩu (*):"));
         pnlForm.add(txtMatKhau);
         pnlForm.add(new JLabel("Quyền Hệ Thống:"));
         pnlForm.add(cbQuyen);
@@ -63,18 +63,26 @@ public class NhanVienPanel extends JPanel {
         pnlTop.add(pnlBtns, BorderLayout.SOUTH);
 
         tableModel = new DefaultTableModel(
-                new String[] { "Mã NV", "Họ Tên", "Chức Vụ", "Số Điện Thoại", "Tài Khoản", "Quyền" }, 0);
+                new String[] { "Mã NV", "Họ Tên", "Chức Vụ", "Số Điện Thoại", "Tài Khoản", "Quyền" }, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         tblNhanVien = new JTable(tableModel);
 
         tblNhanVien.getSelectionModel().addListSelectionListener(e -> {
             int row = tblNhanVien.getSelectedRow();
             if (row >= 0) {
-                txtMaNV.setText(tableModel.getValueAt(row, 0).toString());
-                txtHoTen.setText(tableModel.getValueAt(row, 1).toString());
-                cbChucVu.setSelectedItem(tableModel.getValueAt(row, 2).toString());
-                txtSDT.setText(tableModel.getValueAt(row, 3).toString());
-                txtTenDangNhap.setText(tableModel.getValueAt(row, 4).toString());
-                cbQuyen.setSelectedItem(tableModel.getValueAt(row, 5).toString());
+                txtMaNV.setText(getCellStr(row, 0));
+                txtHoTen.setText(getCellStr(row, 1));
+                cbChucVu.setSelectedItem(getCellStr(row, 2));
+                txtSDT.setText(getCellStr(row, 3));
+                txtTenDangNhap.setText(getCellStr(row, 4));
+                String quyen = getCellStr(row, 5);
+                if (!quyen.isEmpty()) {
+                    cbQuyen.setSelectedItem(quyen);
+                }
                 txtTenDangNhap.setEditable(false);
                 txtMatKhau.setEditable(false);
             }
@@ -86,9 +94,17 @@ public class NhanVienPanel extends JPanel {
         btnThem.addActionListener(e -> themNhanVien());
         btnSua.addActionListener(e -> suaNhanVien());
         btnXoa.addActionListener(e -> xoaNhanVien());
-        btnLamMoi.addActionListener(e -> xoaForm());
+        btnLamMoi.addActionListener(e -> {
+            xoaForm();
+            taiDuLieuNhanVien();
+        });
 
         taiDuLieuNhanVien();
+    }
+
+    private String getCellStr(int row, int col) {
+        Object val = tableModel.getValueAt(row, col);
+        return val == null ? "" : val.toString();
     }
 
     private void taiDuLieuNhanVien() {
@@ -106,7 +122,14 @@ public class NhanVienPanel extends JPanel {
                     String q = extractVal(item, "Quyen");
 
                     if (!id.isEmpty()) {
-                        tableModel.addRow(new Object[] { id, ten, cv, sdt, tk, q });
+                        tableModel.addRow(new Object[] {
+                                id,
+                                ten,
+                                cv,
+                                "null".equals(sdt) ? "" : sdt,
+                                "null".equals(tk) ? "" : tk,
+                                "null".equals(q) ? "" : q
+                        });
                     }
                 }
             }
@@ -116,41 +139,29 @@ public class NhanVienPanel extends JPanel {
     }
 
     private void themNhanVien() {
-        String tenDN = txtTenDangNhap.getText().trim();
-        String hoTen = txtHoTen.getText().trim();
-        String matKhau = new String(txtMatKhau.getPassword()).trim();
-
-        if (hoTen.isEmpty() || tenDN.isEmpty() || matKhau.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ Họ tên, Tên đăng nhập và Mật khẩu!", "Cảnh báo",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // --- KIỂM TRA TRÙNG TÊN TÀI KHOẢN TRÊN FRONTEND ---
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            Object val = tableModel.getValueAt(i, 4); // Cột 4 chứa Tên Đăng Nhập
-            if (val != null && val.toString().equalsIgnoreCase(tenDN)) {
-                JOptionPane.showMessageDialog(this, "Đã có nhân viên dùng tài khoản này!", "Cảnh báo",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-        }
-
         try {
+            String hoTen = esc(txtHoTen.getText().trim());
+            String chucVu = esc(String.valueOf(cbChucVu.getSelectedItem()));
+            String sdt = esc(txtSDT.getText().trim());
+            String tenDN = esc(txtTenDangNhap.getText().trim());
+            String matKhau = esc(new String(txtMatKhau.getPassword()).trim());
+            String quyen = esc(String.valueOf(cbQuyen.getSelectedItem()));
+
             String payload = String.format(
                     "{\"hoTen\":\"%s\",\"chucVu\":\"%s\",\"soDienThoai\":\"%s\",\"tenDangNhap\":\"%s\",\"matKhau\":\"%s\",\"quyen\":\"%s\"}",
-                    hoTen, cbChucVu.getSelectedItem(), txtSDT.getText().trim(),
-                    tenDN, matKhau, cbQuyen.getSelectedItem());
+                    hoTen, chucVu, sdt, tenDN, matKhau, quyen);
             String res = ApiClient.sendPost("/nhan-vien", payload);
+            String msg = extractVal(res, "message");
             if (res.contains("\"success\":true")) {
-                JOptionPane.showMessageDialog(this, "Thêm nhân viên thành công!");
+                JOptionPane.showMessageDialog(this, msg.isEmpty() ? "Thêm nhân viên thành công!" : msg);
                 taiDuLieuNhanVien();
                 xoaForm();
             } else {
-                JOptionPane.showMessageDialog(this, "Thêm nhân viên thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, msg.isEmpty() ? "Thêm nhân viên thất bại!" : msg, "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi kết nối server!");
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối server!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -164,18 +175,22 @@ public class NhanVienPanel extends JPanel {
         try {
             String payload = String.format(
                     "{\"hoTen\":\"%s\",\"chucVu\":\"%s\",\"soDienThoai\":\"%s\",\"quyen\":\"%s\"}",
-                    txtHoTen.getText().trim(), cbChucVu.getSelectedItem(), txtSDT.getText().trim(),
-                    cbQuyen.getSelectedItem());
+                    esc(txtHoTen.getText().trim()),
+                    esc(String.valueOf(cbChucVu.getSelectedItem())),
+                    esc(txtSDT.getText().trim()),
+                    esc(String.valueOf(cbQuyen.getSelectedItem())));
             String res = ApiClient.sendPut("/nhan-vien/" + id, payload);
+            String msg = extractVal(res, "message");
             if (res.contains("\"success\":true")) {
-                JOptionPane.showMessageDialog(this, "Cập nhật nhân viên thành công!");
+                JOptionPane.showMessageDialog(this, msg.isEmpty() ? "Cập nhật nhân viên thành công!" : msg);
                 taiDuLieuNhanVien();
                 xoaForm();
             } else {
-                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, msg.isEmpty() ? "Cập nhật thất bại!" : msg, "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi kết nối server!");
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối server!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -193,16 +208,17 @@ public class NhanVienPanel extends JPanel {
 
         try {
             String res = ApiClient.sendDelete("/nhan-vien/" + id);
+            String msg = extractVal(res, "message");
             if (res.contains("\"success\":true")) {
-                JOptionPane.showMessageDialog(this, "Xóa nhân viên thành công!");
+                JOptionPane.showMessageDialog(this, msg.isEmpty() ? "Xóa nhân viên thành công!" : msg);
                 taiDuLieuNhanVien();
                 xoaForm();
             } else {
-                JOptionPane.showMessageDialog(this, "Không thể xóa nhân viên này do có lịch sử nhập/bán hàng!", "Lỗi",
+                JOptionPane.showMessageDialog(this, msg.isEmpty() ? "Xóa thất bại!" : msg, "Lỗi",
                         JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi kết nối server!");
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối server!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -217,6 +233,12 @@ public class NhanVienPanel extends JPanel {
         tblNhanVien.clearSelection();
     }
 
+    private String esc(String s) {
+        if (s == null)
+            return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
     private String extractVal(String json, String key) {
         try {
             String pattern = "\"" + key + "\":";
@@ -224,15 +246,31 @@ public class NhanVienPanel extends JPanel {
             if (start == -1)
                 return "";
             start += pattern.length();
-            while (start < json.length() && (json.charAt(start) == ' ' || json.charAt(start) == '"')) {
+            while (start < json.length() && json.charAt(start) == ' ') {
                 start++;
             }
-            int end = start;
-            while (end < json.length() && json.charAt(end) != '"' && json.charAt(end) != ',' && json.charAt(end) != '}'
-                    && json.charAt(end) != ']') {
-                end++;
+            if (start >= json.length())
+                return "";
+
+            if (json.charAt(start) == '"') {
+                start++;
+                int end = start;
+                while (end < json.length() && json.charAt(end) != '"') {
+                    if (json.charAt(end) == '\\' && end + 1 < json.length()) {
+                        end += 2;
+                    } else {
+                        end++;
+                    }
+                }
+                return json.substring(start, end).trim();
+            } else {
+                int end = start;
+                while (end < json.length() && json.charAt(end) != ',' && json.charAt(end) != '}'
+                        && json.charAt(end) != ']') {
+                    end++;
+                }
+                return json.substring(start, end).trim();
             }
-            return json.substring(start, end).trim();
         } catch (Exception e) {
             return "";
         }

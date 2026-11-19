@@ -8,6 +8,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -16,9 +18,10 @@ import java.util.Locale;
  * Màn hình Swing Quản lý Nhập Kho (Module 2)
  * Thực hiện bởi: Phan Anh Ngữ
  * Bao gồm 3 tab:
- *  1. Lập phiếu nhập (chọn NCC, NV, Thuốc; nhập lô, hạn dùng, SL, giá; lưu phiếu)
- *  2. Lịch sử phiếu nhập (xem danh sách chi tiết các phiếu nhập)
- *  3. Lô thuốc (tích hợp LoThuocPanel)
+ * 1. Lập phiếu nhập (chọn NCC, NV, Thuốc; nhập lô, hạn dùng, SL, giá; lưu
+ * phiếu)
+ * 2. Lịch sử phiếu nhập (xem danh sách chi tiết các phiếu nhập)
+ * 3. Lô thuốc (tích hợp LoThuocPanel)
  */
 public class NhapKhoPanel extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -105,14 +108,22 @@ public class NhapKhoPanel extends JPanel {
         cbNCC = new JComboBox<>();
         cbNhanVien = new JComboBox<>();
 
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.15;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0.15;
         pnlPhieu.add(new JLabel("Nhà cung cấp:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 0.35;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 0.35;
         pnlPhieu.add(cbNCC, gbc);
 
-        gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0.15;
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.weightx = 0.15;
         pnlPhieu.add(new JLabel("Nhân viên lập phiếu:"), gbc);
-        gbc.gridx = 3; gbc.gridy = 0; gbc.weightx = 0.35;
+        gbc.gridx = 3;
+        gbc.gridy = 0;
+        gbc.weightx = 0.35;
         pnlPhieu.add(cbNhanVien, gbc);
 
         // 2. Thông tin chi tiết lô thuốc nhập
@@ -124,9 +135,9 @@ public class NhapKhoPanel extends JPanel {
         cbThuoc = new JComboBox<>();
         txtSoLo = new JTextField();
         txtNgaySanXuat = new JTextField();
-        txtNgaySanXuat.setToolTipText("Định dạng yyyy-MM-dd (có thể để trống)");
+        txtNgaySanXuat.setToolTipText("Gõ định dạng YYYY-MM-DD hoặc bấm nút Lịch để chọn (có thể để trống)");
         txtHanSuDung = new JTextField();
-        txtHanSuDung.setToolTipText("Định dạng yyyy-MM-dd (bắt buộc)");
+        txtHanSuDung.setToolTipText("Gõ định dạng YYYY-MM-DD hoặc bấm nút Lịch để chọn (bắt buộc)");
         txtSoLuong = new JTextField();
         txtGiaNhap = new JTextField();
 
@@ -138,36 +149,61 @@ public class NhapKhoPanel extends JPanel {
             }
         });
 
-        // Dòng 1 chi tiết: Thuốc, Số Lô, Ngày SX
-        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.12;
+        // Dòng 1 chi tiết: Thuốc, Số Lô, Ngày SX (Hỗ trợ cả gõ phím + chọn lịch)
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0.12;
         pnlChiTiet.add(new JLabel("Thuốc:"), gbc);
-        gbc.gridx = 1; gbc.gridy = 0; gbc.weightx = 0.28;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 0.28;
         pnlChiTiet.add(cbThuoc, gbc);
 
-        gbc.gridx = 2; gbc.gridy = 0; gbc.weightx = 0.12;
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.weightx = 0.12;
         pnlChiTiet.add(new JLabel("Số lô:"), gbc);
-        gbc.gridx = 3; gbc.gridy = 0; gbc.weightx = 0.18;
+        gbc.gridx = 3;
+        gbc.gridy = 0;
+        gbc.weightx = 0.18;
         pnlChiTiet.add(txtSoLo, gbc);
 
-        gbc.gridx = 4; gbc.gridy = 0; gbc.weightx = 0.12;
+        gbc.gridx = 4;
+        gbc.gridy = 0;
+        gbc.weightx = 0.12;
         pnlChiTiet.add(new JLabel("Ngày SX:"), gbc);
-        gbc.gridx = 5; gbc.gridy = 0; gbc.weightx = 0.18;
-        pnlChiTiet.add(txtNgaySanXuat, gbc);
+        gbc.gridx = 5;
+        gbc.gridy = 0;
+        gbc.weightx = 0.18;
+        pnlChiTiet.add(taoOChonNgay(txtNgaySanXuat), gbc);
 
-        // Dòng 2 chi tiết: Hạn sử dụng, Số lượng, Giá nhập
-        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0.12;
+        // Dòng 2 chi tiết: Hạn sử dụng (Hỗ trợ cả gõ phím + chọn lịch), Số lượng, Giá
+        // nhập
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0.12;
         pnlChiTiet.add(new JLabel("Hạn sử dụng (*):"), gbc);
-        gbc.gridx = 1; gbc.gridy = 1; gbc.weightx = 0.28;
-        pnlChiTiet.add(txtHanSuDung, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.weightx = 0.28;
+        pnlChiTiet.add(taoOChonNgay(txtHanSuDung), gbc);
 
-        gbc.gridx = 2; gbc.gridy = 1; gbc.weightx = 0.12;
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.weightx = 0.12;
         pnlChiTiet.add(new JLabel("Số lượng (*):"), gbc);
-        gbc.gridx = 3; gbc.gridy = 1; gbc.weightx = 0.18;
+        gbc.gridx = 3;
+        gbc.gridy = 1;
+        gbc.weightx = 0.18;
         pnlChiTiet.add(txtSoLuong, gbc);
 
-        gbc.gridx = 4; gbc.gridy = 1; gbc.weightx = 0.12;
+        gbc.gridx = 4;
+        gbc.gridy = 1;
+        gbc.weightx = 0.12;
         pnlChiTiet.add(new JLabel("Giá nhập (VNĐ):"), gbc);
-        gbc.gridx = 5; gbc.gridy = 1; gbc.weightx = 0.18;
+        gbc.gridx = 5;
+        gbc.gridy = 1;
+        gbc.weightx = 0.18;
         pnlChiTiet.add(txtGiaNhap, gbc);
 
         // Nút thao tác trên dòng chi tiết
@@ -191,7 +227,8 @@ public class NhapKhoPanel extends JPanel {
         pnlTop.add(pnlGiua, BorderLayout.CENTER);
 
         // --- KHU VỰC BẢNG TẠM CHI TIẾT PHIẾU NHẬP ---
-        String[] cotChiTiet = { "Mã Thuốc", "Tên Thuốc", "Số Lô", "Ngày SX", "Hạn Sử Dụng", "Số Lượng", "Đơn Giá Nhập (VNĐ)", "Thành Tiền (VNĐ)" };
+        String[] cotChiTiet = { "Mã Thuốc", "Tên Thuốc", "Số Lô", "Ngày SX", "Hạn Sử Dụng", "Số Lượng",
+                "Đơn Giá Nhập (VNĐ)", "Thành Tiền (VNĐ)" };
         modelChiTietTam = new DefaultTableModel(cotChiTiet, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -242,6 +279,199 @@ public class NhapKhoPanel extends JPanel {
         btnLuuPhieu.addActionListener(e -> luuPhieuNhap());
 
         return panel;
+    }
+
+    /**
+     * Tạo ô nhập ngày kết hợp: cho phép gõ trực tiếp hoặc bấm nút mở giao diện lịch
+     * (chuẩn YYYY-MM-DD)
+     */
+    private JPanel taoOChonNgay(JTextField txtField) {
+        JPanel pnlDate = new JPanel(new BorderLayout(4, 0));
+        pnlDate.add(txtField, BorderLayout.CENTER);
+
+        JButton btnLich = new JButton("Lịch");
+        btnLich.setFont(new Font("Arial", Font.PLAIN, 11));
+        btnLich.setMargin(new Insets(2, 6, 2, 6));
+        btnLich.setFocusPainted(false);
+        btnLich.setToolTipText("Chọn ngày trên lịch (YYYY-MM-DD)");
+        btnLich.addActionListener(e -> moPopupLich(txtField));
+
+        pnlDate.add(btnLich, BorderLayout.EAST);
+        return pnlDate;
+    }
+
+    /**
+     * Hiển thị hộp thoại lịch chọn ngày và điền kết quả đúng định dạng YYYY-MM-DD
+     * vào JTextField
+     */
+    private void moPopupLich(JTextField targetField) {
+        Window parentWindow = SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(parentWindow, "Chọn ngày (YYYY-MM-DD)", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setLayout(new BorderLayout(6, 6));
+        dialog.setResizable(false);
+
+        LocalDate today = LocalDate.now();
+        LocalDate initialDate = today;
+        String currentText = targetField.getText().trim();
+        if (kiemTraDinhDangNgay(currentText)) {
+            try {
+                initialDate = LocalDate.parse(currentText);
+            } catch (Exception ignored) {
+            }
+        }
+
+        final LocalDate selectedHighlight = initialDate;
+
+        // Thanh điều hướng Tháng / Năm
+        JPanel pnlNav = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+        JButton btnPrev = new JButton("<");
+        btnPrev.setMargin(new Insets(2, 8, 2, 8));
+
+        String[] tenThang = {
+                "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+                "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+        };
+        JComboBox<String> cboThang = new JComboBox<>(tenThang);
+        cboThang.setSelectedIndex(initialDate.getMonthValue() - 1);
+
+        JSpinner spnNam = new JSpinner(new SpinnerNumberModel(initialDate.getYear(), 1990, 2100, 1));
+        JSpinner.NumberEditor yearEditor = new JSpinner.NumberEditor(spnNam, "#");
+        spnNam.setEditor(yearEditor);
+        spnNam.setPreferredSize(new Dimension(68, 25));
+
+        JButton btnNext = new JButton(">");
+        btnNext.setMargin(new Insets(2, 8, 2, 8));
+
+        pnlNav.add(btnPrev);
+        pnlNav.add(cboThang);
+        pnlNav.add(spnNam);
+        pnlNav.add(btnNext);
+
+        // Lưới các ngày trong tháng
+        JPanel pnlDays = new JPanel(new GridLayout(0, 7, 3, 3));
+        pnlDays.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+
+        Runnable renderCalendar = () -> {
+            pnlDays.removeAll();
+            String[] thu = { "T2", "T3", "T4", "T5", "T6", "T7", "CN" };
+            for (int i = 0; i < thu.length; i++) {
+                JLabel lblThu = new JLabel(thu[i], SwingConstants.CENTER);
+                lblThu.setFont(new Font("Arial", Font.BOLD, 12));
+                lblThu.setForeground(i == 6 ? new Color(198, 40, 40) : new Color(40, 58, 90));
+                pnlDays.add(lblThu);
+            }
+
+            int year = (Integer) spnNam.getValue();
+            int month = cboThang.getSelectedIndex() + 1;
+            YearMonth ym = YearMonth.of(year, month);
+
+            int firstDayOfWeek = ym.atDay(1).getDayOfWeek().getValue(); // 1 = T2 ... 7 = CN
+            for (int i = 1; i < firstDayOfWeek; i++) {
+                pnlDays.add(new JLabel(""));
+            }
+
+            int daysInMonth = ym.lengthOfMonth();
+            for (int d = 1; d <= daysInMonth; d++) {
+                final int dayVal = d;
+                JButton btnDay = new JButton(String.valueOf(d));
+                btnDay.setMargin(new Insets(3, 3, 3, 3));
+                btnDay.setFont(new Font("Arial", Font.PLAIN, 12));
+                btnDay.setFocusPainted(false);
+
+                LocalDate cellDate = LocalDate.of(year, month, d);
+                if (cellDate.equals(selectedHighlight)) {
+                    btnDay.setBackground(new Color(40, 120, 70));
+                    btnDay.setForeground(Color.WHITE);
+                    btnDay.setFont(new Font("Arial", Font.BOLD, 12));
+                } else if (cellDate.equals(today)) {
+                    btnDay.setBackground(new Color(225, 240, 255));
+                } else {
+                    btnDay.setBackground(Color.WHITE);
+                }
+
+                btnDay.addActionListener(ev -> {
+                    String formatted = String.format(Locale.US, "%04d-%02d-%02d", year, month, dayVal);
+                    targetField.setText(formatted);
+                    dialog.dispose();
+                });
+
+                pnlDays.add(btnDay);
+            }
+
+            // Bổ sung ô trống cho đủ 6 hàng (42 ô) để kích thước cửa sổ lịch luôn cố định
+            int totalCells = (firstDayOfWeek - 1) + daysInMonth;
+            for (int i = totalCells; i < 42; i++) {
+                pnlDays.add(new JLabel(""));
+            }
+
+            pnlDays.revalidate();
+            pnlDays.repaint();
+        };
+
+        btnPrev.addActionListener(e -> {
+            int m = cboThang.getSelectedIndex();
+            int y = (Integer) spnNam.getValue();
+            if (m == 0) {
+                cboThang.setSelectedIndex(11);
+                spnNam.setValue(y - 1);
+            } else {
+                cboThang.setSelectedIndex(m - 1);
+            }
+        });
+
+        btnNext.addActionListener(e -> {
+            int m = cboThang.getSelectedIndex();
+            int y = (Integer) spnNam.getValue();
+            if (m == 11) {
+                cboThang.setSelectedIndex(0);
+                spnNam.setValue(y + 1);
+            } else {
+                cboThang.setSelectedIndex(m + 1);
+            }
+        });
+
+        cboThang.addActionListener(e -> renderCalendar.run());
+        spnNam.addChangeListener(e -> renderCalendar.run());
+
+        // Thanh nút chức năng dưới cùng
+        JPanel pnlBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
+        JButton btnHomNay = new JButton("Hôm nay");
+        btnHomNay.setFont(new Font("Arial", Font.PLAIN, 12));
+        btnHomNay.addActionListener(e -> {
+            LocalDate now = LocalDate.now();
+            targetField.setText(String.format(Locale.US, "%04d-%02d-%02d", now.getYear(), now.getMonthValue(),
+                    now.getDayOfMonth()));
+            dialog.dispose();
+        });
+
+        JButton btnDong = new JButton("Đóng");
+        btnDong.setFont(new Font("Arial", Font.PLAIN, 12));
+        btnDong.addActionListener(e -> dialog.dispose());
+
+        pnlBottom.add(btnHomNay);
+        pnlBottom.add(btnDong);
+
+        renderCalendar.run();
+
+        dialog.add(pnlNav, BorderLayout.NORTH);
+        dialog.add(pnlDays, BorderLayout.CENTER);
+        dialog.add(pnlBottom, BorderLayout.SOUTH);
+        dialog.pack();
+
+        try {
+            Point loc = targetField.getLocationOnScreen();
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            int x = Math.min(loc.x, screenSize.width - dialog.getWidth() - 10);
+            int y = loc.y + targetField.getHeight() + 2;
+            if (y + dialog.getHeight() > screenSize.height - 40) {
+                y = loc.y - dialog.getHeight() - 2;
+            }
+            dialog.setLocation(Math.max(0, x), Math.max(0, y));
+        } catch (Exception ex) {
+            dialog.setLocationRelativeTo(this);
+        }
+
+        dialog.setVisible(true);
     }
 
     // =========================================================================
@@ -297,7 +527,8 @@ public class NhapKhoPanel extends JPanel {
     }
 
     private void lamMoiLoThuoc() {
-        if (panelLoThuoc != null) panelLoThuoc.taiDuLieu();
+        if (panelLoThuoc != null)
+            panelLoThuoc.taiDuLieu();
     }
 
     // =========================================================================
@@ -380,8 +611,10 @@ public class NhapKhoPanel extends JPanel {
                     String giaStr = extractVal(item, "GiaNhap");
                     double gia = 0;
                     try {
-                        if (!giaStr.isEmpty()) gia = Double.parseDouble(giaStr);
-                    } catch (Exception ignored) {}
+                        if (!giaStr.isEmpty())
+                            gia = Double.parseDouble(giaStr);
+                    } catch (Exception ignored) {
+                    }
 
                     if (!id.isEmpty()) {
                         cbThuoc.addItem(new ThuocItem(Integer.parseInt(id), ten, dvt, gia));
@@ -408,7 +641,8 @@ public class NhapKhoPanel extends JPanel {
                 try {
                     hienThiLichSu(get());
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(NhapKhoPanel.this, "Lỗi kết nối máy chủ khi nạp lịch sử phiếu nhập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(NhapKhoPanel.this, "Lỗi kết nối máy chủ khi nạp lịch sử phiếu nhập!",
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
@@ -421,11 +655,13 @@ public class NhapKhoPanel extends JPanel {
                 String[] items = res.split("\\}\\,\\{");
                 for (String item : items) {
                     String maPN = extractVal(item, "MaPN");
-                    if (maPN.isEmpty()) continue;
+                    if (maPN.isEmpty())
+                        continue;
 
                     String ngayNhap = extractVal(item, "NgayNhap");
                     if (ngayNhap.contains("T")) {
-                        ngayNhap = ngayNhap.substring(0, 10) + " " + ngayNhap.substring(11, Math.min(19, ngayNhap.length()));
+                        ngayNhap = ngayNhap.substring(0, 10) + " "
+                                + ngayNhap.substring(11, Math.min(19, ngayNhap.length()));
                     }
 
                     String tenNCC = extractVal(item, "TenNCC");
@@ -449,7 +685,8 @@ public class NhapKhoPanel extends JPanel {
                 }
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Không thể đọc dữ liệu lịch sử phiếu nhập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Không thể đọc dữ liệu lịch sử phiếu nhập!", "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -467,7 +704,8 @@ public class NhapKhoPanel extends JPanel {
 
         String ngaySX = txtNgaySanXuat.getText().trim();
         if (!ngaySX.isEmpty() && !kiemTraDinhDangNgay(ngaySX)) {
-            JOptionPane.showMessageDialog(this, "Ngày sản xuất không đúng định dạng yyyy-MM-dd (hoặc để trống)!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Ngày sản xuất không đúng định dạng yyyy-MM-dd (hoặc để trống)!",
+                    "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             txtNgaySanXuat.requestFocus();
             return;
         }
@@ -479,7 +717,8 @@ public class NhapKhoPanel extends JPanel {
             return;
         }
         if (!kiemTraDinhDangNgay(hanSD)) {
-            JOptionPane.showMessageDialog(this, "Hạn sử dụng phải đúng định dạng yyyy-MM-dd!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Hạn sử dụng phải đúng định dạng yyyy-MM-dd!", "Cảnh báo",
+                    JOptionPane.WARNING_MESSAGE);
             txtHanSuDung.requestFocus();
             return;
         }
@@ -488,12 +727,14 @@ public class NhapKhoPanel extends JPanel {
         try {
             soLuong = Integer.parseInt(txtSoLuong.getText().trim());
             if (soLuong <= 0) {
-                JOptionPane.showMessageDialog(this, "Số lượng phải là số nguyên dương (> 0)!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Số lượng phải là số nguyên dương (> 0)!", "Cảnh báo",
+                        JOptionPane.WARNING_MESSAGE);
                 txtSoLuong.requestFocus();
                 return;
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Số lượng không hợp lệ! Vui lòng nhập số nguyên dương.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Số lượng không hợp lệ! Vui lòng nhập số nguyên dương.", "Cảnh báo",
+                    JOptionPane.WARNING_MESSAGE);
             txtSoLuong.requestFocus();
             return;
         }
@@ -502,7 +743,8 @@ public class NhapKhoPanel extends JPanel {
         try {
             giaNhap = Double.parseDouble(txtGiaNhap.getText().trim());
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Giá nhập không hợp lệ! Vui lòng nhập số.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Giá nhập không hợp lệ! Vui lòng nhập số.", "Cảnh báo",
+                    JOptionPane.WARNING_MESSAGE);
             txtGiaNhap.requestFocus();
             return;
         }
@@ -535,7 +777,8 @@ public class NhapKhoPanel extends JPanel {
     private void xoaDongChiTiet() {
         int selectedRow = tblChiTietTam.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần xóa trong bảng!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần xóa trong bảng!", "Thông báo",
+                    JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         modelChiTietTam.removeRow(selectedRow);
@@ -567,7 +810,8 @@ public class NhapKhoPanel extends JPanel {
                 try {
                     String clean = val.toString().replaceAll("[^0-9.]", "");
                     tong += Double.parseDouble(clean);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
         }
         lblTongTienTam.setText("Tổng tiền tạm tính: " + dfTien.format(tong) + " VNĐ");
@@ -585,12 +829,15 @@ public class NhapKhoPanel extends JPanel {
 
         NhanVienItem nv = (NhanVienItem) cbNhanVien.getSelectedItem();
         if (nv == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên lập phiếu!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên lập phiếu!", "Cảnh báo",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         if (modelChiTietTam.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "Phiếu nhập chưa có mặt hàng nào! Vui lòng thêm ít nhất một dòng chi tiết.", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Phiếu nhập chưa có mặt hàng nào! Vui lòng thêm ít nhất một dòng chi tiết.", "Cảnh báo",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -609,7 +856,8 @@ public class NhapKhoPanel extends JPanel {
         sb.append("\"chiTiet\":[");
 
         for (int i = 0; i < modelChiTietTam.getRowCount(); i++) {
-            if (i > 0) sb.append(",");
+            if (i > 0)
+                sb.append(",");
             int maThuoc = Integer.parseInt(modelChiTietTam.getValueAt(i, 0).toString());
             String soLo = esc(modelChiTietTam.getValueAt(i, 2).toString().trim());
             String nsx = modelChiTietTam.getValueAt(i, 3).toString().trim();
@@ -646,32 +894,37 @@ public class NhapKhoPanel extends JPanel {
                 btnLuuPhieu.setEnabled(true);
                 try {
                     String res = get();
-            if (res.contains("\"success\":true")) {
-                String maPN = extractVal(res, "MaPN");
-                if (maPN.isEmpty()) maPN = extractVal(res, "maPN");
+                    if (res.contains("\"success\":true")) {
+                        String maPN = extractVal(res, "MaPN");
+                        if (maPN.isEmpty())
+                            maPN = extractVal(res, "maPN");
 
-                String msg = "Tạo phiếu nhập thành công!";
-                if (!maPN.isEmpty()) {
-                    msg += " (Mã phiếu: " + maPN + ")";
-                }
-                JOptionPane.showMessageDialog(NhapKhoPanel.this, msg, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                        String msg = "Tạo phiếu nhập thành công!";
+                        if (!maPN.isEmpty()) {
+                            msg += " (Mã phiếu: " + maPN + ")";
+                        }
+                        JOptionPane.showMessageDialog(NhapKhoPanel.this, msg, "Thông báo",
+                                JOptionPane.INFORMATION_MESSAGE);
 
-                // Xóa bảng tạm và làm mới dữ liệu
-                modelChiTietTam.setRowCount(0);
-                capNhatTongTienTam();
-                xoaFormNhap();
+                        // Xóa bảng tạm và làm mới dữ liệu
+                        modelChiTietTam.setRowCount(0);
+                        capNhatTongTienTam();
+                        xoaFormNhap();
 
-                // Nạp lại danh sách lịch sử và lô thuốc
-                taiLichSuPhieuNhap();
-                lamMoiLoThuoc();
-            } else {
-                // Hiển thị chính xác thông báo lỗi từ máy chủ / trigger SQLSTATE 45000
-                String msg = extractVal(res, "message");
-                if (msg.isEmpty()) msg = "Tạo phiếu nhập thất bại!";
-                JOptionPane.showMessageDialog(NhapKhoPanel.this, msg, "Lỗi từ máy chủ", JOptionPane.ERROR_MESSAGE);
-            }
+                        // Nạp lại danh sách lịch sử và lô thuốc
+                        taiLichSuPhieuNhap();
+                        lamMoiLoThuoc();
+                    } else {
+                        // Hiển thị chính xác thông báo lỗi từ máy chủ / trigger SQLSTATE 45000
+                        String msg = extractVal(res, "message");
+                        if (msg.isEmpty())
+                            msg = "Tạo phiếu nhập thất bại!";
+                        JOptionPane.showMessageDialog(NhapKhoPanel.this, msg, "Lỗi từ máy chủ",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(NhapKhoPanel.this, "Lỗi kết nối máy chủ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(NhapKhoPanel.this, "Lỗi kết nối máy chủ: " + e.getMessage(), "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
@@ -688,13 +941,15 @@ public class NhapKhoPanel extends JPanel {
         try {
             String pattern = "\"" + key + "\":";
             int start = json.indexOf(pattern);
-            if (start == -1) return "";
+            if (start == -1)
+                return "";
             start += pattern.length();
 
             while (start < json.length() && json.charAt(start) == ' ') {
                 start++;
             }
-            if (start >= json.length()) return "";
+            if (start >= json.length())
+                return "";
 
             if (json.charAt(start) == '"') {
                 start++;
@@ -709,7 +964,8 @@ public class NhapKhoPanel extends JPanel {
                 return json.substring(start, end).trim();
             } else {
                 int end = start;
-                while (end < json.length() && json.charAt(end) != ',' && json.charAt(end) != '}' && json.charAt(end) != ']') {
+                while (end < json.length() && json.charAt(end) != ',' && json.charAt(end) != '}'
+                        && json.charAt(end) != ']') {
                     end++;
                 }
                 return json.substring(start, end).trim();
@@ -720,7 +976,8 @@ public class NhapKhoPanel extends JPanel {
     }
 
     private String esc(String s) {
-        if (s == null) return "";
+        if (s == null)
+            return "";
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
@@ -739,7 +996,8 @@ public class NhapKhoPanel extends JPanel {
     }
 
     private String dinhDangTien(String val) {
-        if (val == null || val.isEmpty()) return "0";
+        if (val == null || val.isEmpty())
+            return "0";
         try {
             double d = Double.parseDouble(val);
             return dfTien.format(d);

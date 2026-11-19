@@ -1,60 +1,50 @@
-*****Trước khi thực hiện dự án*****
+***TÓM TẮT SỬA DỰ ÁN****
 
-1. Cài đặt các phần mềm nền tảng
+Thịnh: 
+	Sửa lại controller và fronted tại các mục nhanvien, danhmuc. Đưa tất cả về Backend và tạo các logic hàm trong file SQL
+	
+	Bổ sung thêm các phương pháp thống kê tại phần thống kê
 
-	Node.js: Tải và cài đặt Node.js (Bản LTS) (khuyến nghị phiên bản 18 hoặc 20).
+An Bình: 
+	Không sửa gì hết, hệ thống chạy ổn
 
-	Java Development Kit (JDK): Tải và cài đặt JDK 17 hoặc JDK 21 (ví dụ: Oracle JDK hoặc Eclipse Temurin).
+Ngữ:
+	Bổ sung thêm phần nhập vào lịch tại NSX và HSD cho tiện lợi hơn 
+Bảo:
+	Bổ sung thêm logic phần kiểm tra tính hợp lệ tại thuoc_logic.sql
 
-	MySQL Server & Workbench: Tải và cài đặt MySQL Installer (bao gồm MySQL Server 8.0+ và MySQL Workbench). 
-		Hãy ghi nhớ mật khẩu root đã cài.
+	Sửa lại đường dẫn api tại router và frontend
 
-2. Cài đặt các Extension bắt buộc trên VS Code
+	Cập nhật lại thuoc.controller cho việc cập nhật thuốc và thêm thuốc(Xóa cột Gianhap, Ton_kho không được nhập 
+	trực tiếp từ bàn phím mà chỉ có thể thông qua nhập kho và bán hàng (Default 0)
 
-	Mở VS Code, truy cập mục Extensions (Ctrl + Shift + X) và cài đặt các tiện ích sau:
+****LƯU Ý KHI CHẠY DỰ ÁN FULL****
 
-	Extension Pack for Java (của Microsoft) – Bộ công cụ biên dịch và chạy Java.
+	Trường hợp 1: Ae muốn giữ lại dữ liệu test dự án đã có sẵn trên máy mình:
 
-	Git Graph hoặc GitLens – Công cụ hỗ trợ theo dõi các nhánh (branch) và commit dễ dàng.
+	Vào backend/sql. Sau đó chạy lần lượt các lệnh sau:
 
-3. Nạp Cơ sở dữ liệu (MySQL Database)
 
-	Mở MySQL Workbench và đăng nhập tài khoản root.
+		ALTER TABLE Thuoc DROP COLUMN GiaNhap;
+		ALTER TABLE Thuoc MODIFY COLUMN SoLuongTon INT NOT NULL DEFAULT 0;
 
-	Mở file quanlynhathuoc.sql (nằm trong thư mục database/ hoặc thư mục gốc của dự án vừa clone).
+		Sau đó chạy lần lượt các file danhmuc_logic, nhanvien_logic, thuoc_logic, nhapkho_triggers
 
-	Bôi đen toàn bộ nội dung file và bấm nút Execute (Hình tia sét) để tự động tạo Database quanlynhathuoc 
-cùng các bảng và dữ liệu mẫu.
+		Trường hợp này có thể có lỗi xung đột cấu trúc CSDL, nếu muốn tránh thì hơi lubu và nhờ trời độ
 
-	Đảm bảo ở danh sách SCHEMAS bên trái xuất hiện database quanlynhathuoc
+	Trường hợp 2: Ko cần giữ lại dự án, chỉ cần chạy được hệ thống và test
 
-	Hình cấu trúc CSDL cũng nằm trong dự án file SoDoCSDL.jpg
+	Vào backend/sql. Sau đó chỉ cần chạy quanlynhathuoc_full
 
-4.Cấu hình và chạy Server Backend (Node.js)
-	Trong VS Code, mở Terminal mới (Ctrl + ~) và di chuyển vào thư mục backend:
-		cd backend
-	Cài đặt các gói thư viện cần thiết:
-		npm install
-	Tạo file cấu hình môi trường .env:
-		Đổi tên hoặc sao chép file .env.example thành .env.
-		Mở file .env và cập nhật thông tin kết nối Database của máy:
+Sau đó, cứ việc chạy  các lệnh sau: 
 
-			PORT=5000
-			DB_HOST=localhost
-			DB_USER=root
-			DB_PASS=nhap_mat_khau_mysql_cua_ban_vao_day
-			DB_NAME=quanlynhathuoc
-		Khởi chạy Server Node.js:
-			node server.js
-		(Màn hình báo Server running on port 5000 và Connected to MySQL database là hoàn tất).
+	node server.js tại backend
+	 
+	javac -encoding UTF-8 -d bin src\utils\*.java src\views\*.java && java -cp bin views.LoginForm tại frontend-java
 
-5. Kiểm tra và chạy Frontend Java Swing
+	Hoặc nhấn vào nút Run tại phần public static void main của file LoginForm.java
 
-	Mở file src/views/LoginForm.java trong VS Code.
-
-	Bấm nút Run (hoặc phím F5) trên VS Code để khởi chạy giao diện Đăng nhập.
-
-	Đăng nhập thử bằng các tài khoản phân quyền đã có sẵn để kiểm tra kết nối API:
+Đăng nhập thử bằng các tài khoản phân quyền đã có sẵn để kiểm tra kết nối API:
 
 		Admin: admin / admin123
 
@@ -62,25 +52,19 @@ cùng các bảng và dữ liệu mẫu.
 
 		Bán hàng: banhang1 / 123456
 
-6. Quy trình tạo nhánh và đẩy code cá nhân (Git Workflow)
+****** NẾU MUỐN SỬA DỰ ÁN *******
+
+Quy trình tạo nhánh và đẩy code cá nhân (Git Workflow)
 
 	Tuyệt đối KHÔNG làm việc hay commit trực tiếp trên nhánh main. Mỗi thành viên tuân thủ đúng 5 bước sau:
 
-	1.Tạo nhánh riêng theo tính năng được phân công:
-
-		# Thành viên 2 (Nhập kho)
-		git checkout -b feature/nhap-kho
-
-		# Thành viên 3 (Bán hàng POS)
-		git checkout -b feature/ban-hang
-
-		# Thành viên 4 (Danh mục Thuốc & Khách hàng)
-		git checkout -b feature/quan-ly-thuoc
+	1.Tạo nhánh riêng theo tên của bạn :
+		git checkout -b feature/update_by_Thinh
 	2. Lập trình và Lưu vết công việc (Commit) thường xuyên
 
 	3.Sau khi viết/sửa xong một phần chức năng:
 		git add .
-		git commit -m "Mô tả ngắn gọn công việc vừa xong (VD: Hoàn thành API tạo phiếu nhập)"
+		git commit -m "Mô tả ngắn gọn update đề xuất"
 	4. Đẩy nhánh lên GitHub khi hoàn thành tính năng:
 		git push origin <ten-nhanh-cua-ban>
 	5.Tạo Pull Request (PR):
@@ -90,77 +74,6 @@ cùng các bảng và dữ liệu mẫu.
 	6. Cập nhật code mới nhất từ Nhóm trưởng trước khi làm tính năng mới:
 		git checkout main
 		git pull origin main
-7. Các lưu ý chung:
-
-	Các bạn làm phần nào thì sửa lại Controller và thêm vào giao diện Java Fontend của phần đó
-
-	Nếu muốn thêm Controller hoặc giao diện khác, cứ việc thêm thoải mái, nhắn tui trước là được. Nhưng lưu ý phần 
-thêm vào không được trùng nội dung của các bạn khác đang làm
-
-	Nếu các bạn muốn thay đổi cấu trúc bảng cơ sở dữ liệu, có thể truy cập vào link draw.io(ở cuối file) và sửa vào
- 
-
-
-=====================================================================================================================
-
-1. Thành viên 2 (Module: Kho & Nhập hàng) - Ngữ 
-
-	***Nhiệm vụ Backend (controllers/nhapKhoController.js):
-
-	POST /api/nhap-kho/phieu-nhap: Tiếp nhận thông tin phiếu nhập->Thêm dòng vào PhieuNhap ->Thêm dòng vào LoThuoc
-(ghi nhận SoLo, HanSuDung, SoLuongTon, GiaNhap)-> Thêm chi tiết vào ChiTietPhieuNhap->Tự động cộng số lượng tồn 
-vào bảng Thuoc.
-
-	GET /api/nhap-kho/phieu-nhap: Lấy danh sách phiếu nhập và chi tiết phiếu nhập.
-
-	***Nhiệm vụ Frontend 
-
-(views/NhapKhoPanel.java):Giao diện tạo phiếu nhập (chọn NhaCungCap, chọn Thuoc, nhập SoLo, HanSuDung, SoLuong, GiaNhap) và hiển thị bảng 
-lịch sử phiếu nhập.
-
-(views/LoThuocPanel.java):Giao diện xem các lô thuốc, xác định các lô thuốc còn hạn, các lô thuốc hết hạn
-
-=====================================================================================================================
-
-2. Thành viên 3 (Module: POS Bán hàng & Hóa đơn) - An Bình
-
-	***Nhiệm vụ Backend (controllers/banHangController.js):
-
-	POST /api/ban-hang/hoa-don: Tạo hóa đơn mới. Thực hiện quy trình FEFO: Truy vấn LoThuoc có HanSuDung >= CURDATE() 
-và SoLuongTon > 0 của thuốc được chọn (sắp xếp HanSuDung ASC), tự động trừ SoLuongTon của lô gần hết hạn nhất trước
- 
--> Thêm vào ChiTietHoaDon (lưu MaLo và GiaBan) -> Trừ tổng số lượng tồn ở bảng Thuoc.
-
-	GET /api/ban-hang/hoa-don: Lấy lịch sử hóa đơn bán hàng.
-
-	***Nhiệm vụ Frontend 
-
-	(views/BanHangPanel.java): Giao diện POS bán hàng (Tìm kiếm thuốc, thêm vào giỏ hàng, tính tổng tiền, 
-bấm thanh toán và in/xem hóa đơn ra file excel).
-
-=====================================================================================================================
-
-3. Thành viên 4 (Module: Quản lý Thuốc & Khách hàng) - Bảo
-
-	***Nhiệm vụ Backend (controllers/thuocController.js):
-
-	GET /api/thuoc: Lấy danh sách toàn bộ thuốc kèm số lượng tồn tổng và thông tin hãng sản xuất.
-
-	POST /api/thuoc, PUT /api/thuoc/:id, DELETE /api/thuoc/:id: Thêm, sửa, xóa danh mục thuốc.
-
-	GET /api/loaithuoc: Lấy thông tin loại thuốc
-
-	POST /api/loaithuoc, PUT /api/thuoc/:id, DELETE /api/thuoc/:id: Thêm, sửa, xóa danh mục loại thuốc.
-
-	GET /api/khach-hang, POST /api/khach-hang: Quản lý danh sách khách hàng thân thiết.
-
-	***Nhiệm vụ Frontend 
-
-	(views/ThuocPanel.java):Giao diện quản lý thông tin thuốc, loại thuốc
-	
-	(views/KhachHangPanel.java):Giao diện quản lý thông tin khách hàng
-
-	(Có các nút Thêm, Sửa, Xóa, Tìm kiếm).
 
 
 Link gg Drive edit CSDL trên draw.io: https://drive.google.com/file/d/12GLMNNKOWXrL2QwOwVLcUF5YLSUuQG8D/view?usp=sharing

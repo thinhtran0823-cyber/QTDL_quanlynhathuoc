@@ -1,5 +1,25 @@
 const pool = require('../config/db');
 
+// Hàm tiện ích xử lý lỗi trả về từ MySQL Trigger / Stored Procedure
+const handleSqlError = (res, error) => {
+    if (error.sqlState === '45000' || error.errno === 1644) {
+        return res.status(400).json({
+            success: false,
+            message: error.sqlMessage || error.message
+        });
+    }
+    if (error.errno === 1451) {
+        return res.status(400).json({
+            success: false,
+            message: 'Không thể xóa nhân viên do đã có lịch sử giao dịch bán/nhập hàng!'
+        });
+    }
+    return res.status(500).json({
+        success: false,
+        message: error.message
+    });
+};
+
 const getNhanVien = async (req, res) => {
     try {
         const querySQL = `
@@ -17,75 +37,38 @@ const getNhanVien = async (req, res) => {
 
 const themNhanVien = async (req, res) => {
     const { hoTen, chucVu, soDienThoai, tenDangNhap, matKhau, quyen } = req.body;
-    const connection = await pool.getConnection();
     try {
-        await connection.beginTransaction();
-
-        const [result] = await connection.query(
-            'INSERT INTO NhanVien (HoTen, ChucVu, SoDienThoai, TrangThai) VALUES (?, ?, ?, 1)',
-            [hoTen, chucVu, soDienThoai]
+        await pool.query(
+            'CALL sp_ThemNhanVien(?, ?, ?, ?, ?, ?)',
+            [hoTen ?? '', chucVu ?? '', soDienThoai ?? '', tenDangNhap ?? '', matKhau ?? '', quyen ?? 'BANHANG']
         );
-        const newMaNV = result.insertId;
-
-        if (tenDangNhap && matKhau) {
-            await connection.query(
-                'INSERT INTO TaiKhoan (TenDangNhap, MaNV, MatKhau, Quyen) VALUES (?, ?, ?, ?)',
-                [tenDangNhap, newMaNV, matKhau, quyen || 'BANHANG']
-            );
-        }
-
-        await connection.commit();
-        return res.status(200).json({ success: true, message: 'Thêm nhân viên và tài khoản thành công!' });
+        return res.status(201).json({ success: true, message: 'Thêm nhân viên và tài khoản thành công!' });
     } catch (error) {
-        await connection.rollback();
-        return res.status(500).json({ success: false, message: error.message });
-    } finally {
-        connection.release();
+        return handleSqlError(res, error);
     }
 };
 
 const suaNhanVien = async (req, res) => {
     const { id } = req.params;
     const { hoTen, chucVu, soDienThoai, quyen } = req.body;
-    const connection = await pool.getConnection();
     try {
-        await connection.beginTransaction();
-
-        const [resNV] = await connection.query(
-            'UPDATE NhanVien SET HoTen = ?, ChucVu = ?, SoDienThoai = ? WHERE MaNV = ?',
-            [hoTen, chucVu, soDienThoai, id]
+        await pool.query(
+            'CALL sp_SuaNhanVien(?, ?, ?, ?, ?)',
+            [id, hoTen ?? '', chucVu ?? '', soDienThoai ?? '', quyen ?? '']
         );
-
-        if (resNV.affectedRows === 0) {
-            await connection.rollback();
-            return res.status(404).json({ success: false, message: 'Không tìm thấy nhân viên để cập nhật!' });
-        }
-
-        if (quyen) {
-            await connection.query('UPDATE TaiKhoan SET Quyen = ? WHERE MaNV = ?', [quyen, id]);
-        }
-
-        await connection.commit();
         return res.status(200).json({ success: true, message: 'Cập nhật nhân viên thành công!' });
     } catch (error) {
-        await connection.rollback();
-        return res.status(500).json({ success: false, message: error.message });
-    } finally {
-        connection.release();
+        return handleSqlError(res, error);
     }
 };
 
 const xoaNhanVien = async (req, res) => {
     const { id } = req.params;
     try {
-        await pool.query('DELETE FROM TaiKhoan WHERE MaNV = ?', [id]);
-        const [result] = await pool.query('DELETE FROM NhanVien WHERE MaNV = ?', [id]);
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ success: false, message: 'Không tìm thấy nhân viên để xóa!' });
-        }
+        await pool.query('CALL sp_XoaNhanVien(?)', [id]);
         return res.status(200).json({ success: true, message: 'Xóa nhân viên thành công!' });
     } catch (error) {
-        return res.status(500).json({ success: false, message: 'Không thể xóa nhân viên do đã có lịch sử giao dịch bán/nhập hàng!' });
+        return handleSqlError(res, error);
     }
 };
 

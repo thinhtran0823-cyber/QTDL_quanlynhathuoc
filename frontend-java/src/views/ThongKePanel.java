@@ -9,7 +9,11 @@ import java.awt.*;
 public class ThongKePanel extends JPanel {
     private JLabel lblTongDoanhThu;
     private JLabel lblTongChiPhi;
+    private JLabel lblTongChiNhapKho;
+    private JLabel lblThietHaiHetHan;
     private JLabel lblLoiNhuanRong;
+    private JPanel cardLoiNhuan;
+
     private JComboBox<String> cbLoaiBaoCao;
     private JTable tblDoanhThu;
     private DefaultTableModel tableModel;
@@ -18,12 +22,15 @@ public class ThongKePanel extends JPanel {
         setLayout(new BorderLayout(15, 15));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // --- 1. PHẦN TRÊN: 3 THẺ TỔNG QUAN ---
-        JPanel panelCards = new JPanel(new GridLayout(1, 3, 15, 0));
+        // --- 1. PHẦN TRÊN: 5 THẺ TỔNG QUAN TÀI CHÍNH ---
+        JPanel panelCards = new JPanel(new GridLayout(1, 5, 12, 0));
 
         lblTongDoanhThu = taoCard(panelCards, "TỔNG DOANH THU", "0 VNĐ", new Color(40, 167, 69));
-        lblTongChiPhi = taoCard(panelCards, "TỔNG GIÁ VỐN", "0 VNĐ", new Color(220, 53, 69));
-        lblLoiNhuanRong = taoCard(panelCards, "LỢI NHUẬN RÒNG", "0 VNĐ", new Color(0, 123, 255));
+        lblTongChiPhi = taoCard(panelCards, "GIÁ VỐN HÀNG BÁN", "0 VNĐ", new Color(230, 126, 34));
+        lblTongChiNhapKho = taoCard(panelCards, "TỔNG CHI NHẬP KHO", "0 VNĐ", new Color(23, 162, 184));
+        lblThietHaiHetHan = taoCard(panelCards, "THIỆT HẠI HẾT HẠN", "0 VNĐ", new Color(220, 53, 69));
+        lblLoiNhuanRong = taoCard(panelCards, "LỢI NHUẬN THỰC TẾ", "0 VNĐ", new Color(0, 123, 255));
+        cardLoiNhuan = (JPanel) lblLoiNhuanRong.getParent();
 
         add(panelCards, BorderLayout.NORTH);
 
@@ -44,7 +51,12 @@ public class ThongKePanel extends JPanel {
         panelCenter.add(panelFilter, BorderLayout.NORTH);
 
         String[] columnNames = { "Kỳ / Thời gian", "Số hóa đơn bán", "Doanh thu (VNĐ)" };
-        tableModel = new DefaultTableModel(columnNames, 0);
+        tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         tblDoanhThu = new JTable(tableModel);
         tblDoanhThu.setRowHeight(25);
 
@@ -62,15 +74,15 @@ public class ThongKePanel extends JPanel {
     private JLabel taoCard(JPanel parent, String title, String defaultValue, Color color) {
         JPanel card = new JPanel(new BorderLayout(5, 5));
         card.setBackground(color);
-        card.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        card.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
         JLabel lblTitle = new JLabel(title);
         lblTitle.setForeground(Color.WHITE);
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 12));
+        lblTitle.setFont(new Font("Arial", Font.BOLD, 11));
 
         JLabel lblValue = new JLabel(defaultValue);
         lblValue.setForeground(Color.WHITE);
-        lblValue.setFont(new Font("Arial", Font.BOLD, 18));
+        lblValue.setFont(new Font("Arial", Font.BOLD, 15));
 
         card.add(lblTitle, BorderLayout.NORTH);
         card.add(lblValue, BorderLayout.CENTER);
@@ -81,16 +93,29 @@ public class ThongKePanel extends JPanel {
 
     public void taiDuLieuThongKe() {
         try {
-            // 1. Tải Lợi nhuận
+            // 1. Tải chỉ số Doanh thu, Giá vốn, Chi nhập, Thiệt hại hết hạn & Lợi nhuận
             String resLoiNhuan = ApiClient.sendGet("/thong-ke/loi-nhuan");
             if (resLoiNhuan.contains("\"success\":true")) {
                 String dt = extractJsonNumber(resLoiNhuan, "TongDoanhThu");
                 String cp = extractJsonNumber(resLoiNhuan, "TongChiPhiVon");
+                String chiNhap = extractJsonNumber(resLoiNhuan, "TongChiNhapKho");
+                String hetHan = extractJsonNumber(resLoiNhuan, "ThietHaiHetHan");
                 String ln = extractJsonNumber(resLoiNhuan, "LoiNhuanRong");
 
                 lblTongDoanhThu.setText(dinhDangTien(dt) + " VNĐ");
                 lblTongChiPhi.setText(dinhDangTien(cp) + " VNĐ");
+                lblTongChiNhapKho.setText(dinhDangTien(chiNhap) + " VNĐ");
+                lblThietHaiHetHan.setText(dinhDangTien(hetHan) + " VNĐ");
                 lblLoiNhuanRong.setText(dinhDangTien(ln) + " VNĐ");
+
+                // Đổi màu thẻ Lợi nhuận sang đỏ đậm nếu bị lỗ (< 0)
+                if (cardLoiNhuan != null) {
+                    try {
+                        double valLN = Double.parseDouble(ln);
+                        cardLoiNhuan.setBackground(valLN < 0 ? new Color(183, 28, 28) : new Color(0, 123, 255));
+                    } catch (Exception ignored) {
+                    }
+                }
             }
 
             // 2. Tải Bảng Doanh Thu

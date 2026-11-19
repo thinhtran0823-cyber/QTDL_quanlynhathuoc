@@ -1,15 +1,15 @@
 # Node.js
 node_modules/
 .env
+npm-debug.log*
 
-# Java Compilation
-*.class
+# Java compiled files
 bin/
-target/
-out/
+*.class
+*.jar
 
-# IDE / Editor Files
+# IDE & OS
 .vscode/
 .idea/
-*.iml
 .DS_Store
+Thumbs.db
