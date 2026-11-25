@@ -55,84 +55,157 @@ BEGIN
 END$$
 DELIMITER ;
 
--- 4. Stored Procedure Thêm thuốc mới (xử lý toàn bộ kiểm tra đầu vào từ Backend)
+-- =========================================================================
+-- 2. TRIGGER TOÀN VẸN CHO BẢNG LoaiThuoc (CHỐNG TRÙNG & CHẶN XÓA KHI CÓ THUỐC)
+-- =========================================================================
+DROP TRIGGER IF EXISTS trg_LoaiThuoc_BI_KiemTra;
+DELIMITER $$
+CREATE TRIGGER trg_LoaiThuoc_BI_KiemTra
+BEFORE INSERT ON LoaiThuoc
+FOR EACH ROW
+BEGIN
+    SET NEW.TenLoai = TRIM(COALESCE(NEW.TenLoai, ''));
+    SET NEW.DonViTinh = TRIM(COALESCE(NEW.DonViTinh, ''));
+
+    IF NEW.TenLoai = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Tên loại thuốc không được để trống!';
+    END IF;
+
+    IF NEW.DonViTinh = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Đơn vị tính mặc định của loại thuốc không được để trống!';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM LoaiThuoc WHERE LOWER(TenLoai) = LOWER(NEW.TenLoai)) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Tên loại thuốc này đã tồn tại trong hệ thống!';
+    END IF;
+END$$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS trg_LoaiThuoc_BU_KiemTra;
+DELIMITER $$
+CREATE TRIGGER trg_LoaiThuoc_BU_KiemTra
+BEFORE UPDATE ON LoaiThuoc
+FOR EACH ROW
+BEGIN
+    SET NEW.TenLoai = TRIM(COALESCE(NEW.TenLoai, ''));
+    SET NEW.DonViTinh = TRIM(COALESCE(NEW.DonViTinh, ''));
+
+    IF NEW.TenLoai = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Tên loại thuốc không được để trống!';
+    END IF;
+
+    IF NEW.DonViTinh = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Đơn vị tính mặc định không được để trống!';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM LoaiThuoc 
+        WHERE LOWER(TenLoai) = LOWER(NEW.TenLoai) AND MaLoai <> OLD.MaLoai
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Tên loại thuốc bị trùng với loại thuốc khác!';
+    END IF;
+END$$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS trg_LoaiThuoc_BD_KiemTra;
+DELIMITER $$
+CREATE TRIGGER trg_LoaiThuoc_BD_KiemTra
+BEFORE DELETE ON LoaiThuoc
+FOR EACH ROW
+BEGIN
+    IF EXISTS (SELECT 1 FROM Thuoc WHERE MaLoai = OLD.MaLoai) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Không thể xóa loại thuốc này vì đang có thuốc thuộc loại này trong danh mục!';
+    END IF;
+END$$
+DELIMITER ;
+
+-- =========================================================================
+-- 3. CẬP NHẬT STORED PROCEDURE sp_ThemThuoc & sp_CapNhatThuoc (THÊM p_MaLoai)
+-- =========================================================================
 DROP PROCEDURE IF EXISTS sp_ThemThuoc;
 DELIMITER $$
 CREATE PROCEDURE sp_ThemThuoc(
-    IN p_TenThuoc VARCHAR(200),
+    IN p_TenThuoc VARCHAR(150),
     IN p_DonViTinh VARCHAR(50),
     IN p_GiaBan VARCHAR(50),
-    IN p_MaHangSX INT
+    IN p_MaHangSX INT,
+    IN p_MaLoai INT
 )
 BEGIN
-    IF p_TenThuoc IS NULL OR TRIM(p_TenThuoc) = '' THEN
+    DECLARE v_GiaBan DECIMAL(15,2);
+
+    IF TRIM(COALESCE(p_GiaBan, '')) = '' OR p_GiaBan NOT REGEXP '^[0-9]+(\\.[0-9]+)?$' THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Tên thuốc không được để trống';
+        SET MESSAGE_TEXT = 'Giá bán phải là số hợp lệ và không được âm!';
     END IF;
 
-    IF p_DonViTinh IS NULL OR TRIM(p_DonViTinh) = '' THEN
+    SET v_GiaBan = CAST(p_GiaBan AS DECIMAL(15,2));
+
+    IF p_MaHangSX IS NOT NULL AND NOT EXISTS (SELECT 1 FROM HangSX WHERE MaHangSX = p_MaHangSX) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Đơn vị tính không được để trống';
+        SET MESSAGE_TEXT = 'Hãng sản xuất được chọn không tồn tại!';
     END IF;
 
-    IF p_GiaBan IS NULL OR TRIM(p_GiaBan) = '' OR TRIM(p_GiaBan) NOT REGEXP '^-?[0-9]+(\\.[0-9]+)?$' THEN
+    IF p_MaLoai IS NOT NULL AND NOT EXISTS (SELECT 1 FROM LoaiThuoc WHERE MaLoai = p_MaLoai) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Giá bán không được để trống và phải là số hợp lệ';
+        SET MESSAGE_TEXT = 'Loại thuốc được chọn không tồn tại!';
     END IF;
 
-    IF CAST(TRIM(p_GiaBan) AS DECIMAL(15,2)) < 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Giá bán không được nhỏ hơn 0';
-    END IF;
-
-    INSERT INTO Thuoc (TenThuoc, DonViTinh, GiaBan, SoLuongTon, MaHangSX)
-    VALUES (TRIM(p_TenThuoc), TRIM(p_DonViTinh), CAST(TRIM(p_GiaBan) AS DECIMAL(15,2)), 0, p_MaHangSX);
+    INSERT INTO Thuoc (TenThuoc, DonViTinh, GiaBan, SoLuongTon, MaHangSX, MaLoai)
+    VALUES (p_TenThuoc, p_DonViTinh, v_GiaBan, 0, p_MaHangSX, p_MaLoai);
 
     SELECT LAST_INSERT_ID() AS MaThuoc;
 END$$
 DELIMITER ;
 
--- 5. Stored Procedure Cập nhật thông tin thuốc (không cho sửa tồn kho)
 DROP PROCEDURE IF EXISTS sp_CapNhatThuoc;
 DELIMITER $$
 CREATE PROCEDURE sp_CapNhatThuoc(
     IN p_MaThuoc INT,
-    IN p_TenThuoc VARCHAR(200),
+    IN p_TenThuoc VARCHAR(150),
     IN p_DonViTinh VARCHAR(50),
     IN p_GiaBan VARCHAR(50),
-    IN p_MaHangSX INT
+    IN p_MaHangSX INT,
+    IN p_MaLoai INT
 )
 BEGIN
+    DECLARE v_GiaBan DECIMAL(15,2);
+
     IF NOT EXISTS (SELECT 1 FROM Thuoc WHERE MaThuoc = p_MaThuoc) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Không tìm thấy thuốc cần cập nhật';
+        SET MESSAGE_TEXT = 'Không tìm thấy thuốc cần cập nhật!';
     END IF;
 
-    IF p_TenThuoc IS NULL OR TRIM(p_TenThuoc) = '' THEN
+    IF TRIM(COALESCE(p_GiaBan, '')) = '' OR p_GiaBan NOT REGEXP '^[0-9]+(\\.[0-9]+)?$' THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Tên thuốc không được để trống';
+        SET MESSAGE_TEXT = 'Giá bán phải là số hợp lệ và không được âm!';
     END IF;
 
-    IF p_DonViTinh IS NULL OR TRIM(p_DonViTinh) = '' THEN
+    SET v_GiaBan = CAST(p_GiaBan AS DECIMAL(15,2));
+
+    IF p_MaHangSX IS NOT NULL AND NOT EXISTS (SELECT 1 FROM HangSX WHERE MaHangSX = p_MaHangSX) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Đơn vị tính không được để trống';
+        SET MESSAGE_TEXT = 'Hãng sản xuất được chọn không tồn tại!';
     END IF;
 
-    IF p_GiaBan IS NULL OR TRIM(p_GiaBan) = '' OR TRIM(p_GiaBan) NOT REGEXP '^-?[0-9]+(\\.[0-9]+)?$' THEN
+    IF p_MaLoai IS NOT NULL AND NOT EXISTS (SELECT 1 FROM LoaiThuoc WHERE MaLoai = p_MaLoai) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Giá bán không được để trống và phải là số hợp lệ';
-    END IF;
-
-    IF CAST(TRIM(p_GiaBan) AS DECIMAL(15,2)) < 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Giá bán không được nhỏ hơn 0';
+        SET MESSAGE_TEXT = 'Loại thuốc được chọn không tồn tại!';
     END IF;
 
     UPDATE Thuoc
-    SET TenThuoc = TRIM(p_TenThuoc),
-        DonViTinh = TRIM(p_DonViTinh),
-        GiaBan = CAST(TRIM(p_GiaBan) AS DECIMAL(15,2)),
-        MaHangSX = p_MaHangSX
+    SET TenThuoc = p_TenThuoc,
+        DonViTinh = p_DonViTinh,
+        GiaBan = v_GiaBan,
+        MaHangSX = p_MaHangSX,
+        MaLoai = p_MaLoai
     WHERE MaThuoc = p_MaThuoc;
 END$$
 DELIMITER ;

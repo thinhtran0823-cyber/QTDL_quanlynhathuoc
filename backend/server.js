@@ -12,6 +12,7 @@ const banHangRoute = require('./routes/banHangRoute'); // TV3
 const thuocRoute = require('./routes/thuocRoute');     // TV4
 const danhMucRoute = require('./routes/danhMucRoute');
 const nhanVienRoute = require('./routes/nhanVienRoute');
+
 //============================================================================
 
 const app = express();
@@ -31,7 +32,7 @@ app.use('/api/ban-hang', banHangRoute); //TV3
 app.use('/api', thuocRoute); //TV4
 app.use('/api/danh-muc', danhMucRoute);
 app.use('/api/nhan-vien', nhanVienRoute);
-
+app.use('/api/goi-y-nhap-hang', require('./routes/goiYNhapHangRoute'));
 //============================================================================
 
 // API Test kết nối Database (Health Check)

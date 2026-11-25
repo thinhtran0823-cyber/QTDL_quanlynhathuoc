@@ -14,6 +14,7 @@ public class MainDashboard extends JFrame {
     // Các nút chức năng trên Sidebar
     private JButton btnThongKe;
     private JButton btnNhapKho;
+    private JButton btnGoiYNhapHang;
     private JButton btnBanHang;
     private JButton btnThuocKH;
     private JButton btnDangXuat;
@@ -58,6 +59,7 @@ public class MainDashboard extends JFrame {
 
         btnThongKe = taoNutMenu(" Báo cáo và Thống kê");
         btnNhapKho = taoNutMenu(" Quản lý Nhập kho");
+        btnGoiYNhapHang = taoNutMenu(" Gợi ý Nhập hàng");
         btnBanHang = taoNutMenu(" Bán hàng");
         btnThuocKH = taoNutMenu(" Quản lý Thuốc và KH");
         btnDangXuat = taoNutMenu(" Đăng xuất");
@@ -73,7 +75,8 @@ public class MainDashboard extends JFrame {
         panelSidebar.add(btnNhanVien); // Cho Admin
         panelSidebar.add(Box.createVerticalStrut(8));
         panelSidebar.add(btnNhapKho);
-        panelSidebar.add(btnNhapKho);
+        panelSidebar.add(Box.createVerticalStrut(8));
+        panelSidebar.add(btnGoiYNhapHang); // Cho Admin & Thủ Kho
         panelSidebar.add(Box.createVerticalStrut(8));
         panelSidebar.add(btnBanHang);
         panelSidebar.add(Box.createVerticalStrut(8));
@@ -90,6 +93,7 @@ public class MainDashboard extends JFrame {
         // Tạo các Panel giao diện đại diện cho 4 Module của 4 thành viên
         panelContent.add(new ThongKePanel(), "THONG_KE");
         panelContent.add(new NhapKhoPanel(), "NHAP_KHO");
+        panelContent.add(new GoiYNhapHangPanel(), "GOI_Y_NHAP_HANG");
         panelContent.add(new BanHangPanel(tenDangNhap), "BAN_HANG");
         // Tạo tabbed pane cho quản lý Thuốc và Khách hàng
         JTabbedPane tabThuocVaKH = new JTabbedPane();
@@ -127,6 +131,7 @@ public class MainDashboard extends JFrame {
         // Mặc định ẩn tất cả nút bấm
         btnThongKe.setVisible(false);
         btnNhapKho.setVisible(false);
+        btnGoiYNhapHang.setVisible(false);
         btnBanHang.setVisible(false);
         btnThuocKH.setVisible(false);
         btnDanhMuc.setVisible(false);
@@ -135,14 +140,16 @@ public class MainDashboard extends JFrame {
             // ADMIN thấy toàn bộ chức năng
             btnThongKe.setVisible(true);
             btnNhapKho.setVisible(true);
+            btnGoiYNhapHang.setVisible(true);
             btnBanHang.setVisible(true);
             btnThuocKH.setVisible(true);
             btnDanhMuc.setVisible(true);
             btnNhanVien.setVisible(true);
             cardLayout.show(panelContent, "THONG_KE");
         } else if ("THUKHO".equalsIgnoreCase(quyen)) {
-            // THUKHO chỉ thấy Nhập kho và Quản lý Thuốc
+            // THUKHO chỉ thấy Nhập kho, Gợi ý nhập hàng và Quản lý Thuốc
             btnNhapKho.setVisible(true);
+            btnGoiYNhapHang.setVisible(true);
             btnThuocKH.setVisible(true);
             btnDanhMuc.setVisible(true);
             cardLayout.show(panelContent, "NHAP_KHO");
@@ -157,6 +164,7 @@ public class MainDashboard extends JFrame {
     private void ganSuKien() {
         btnThongKe.addActionListener(e -> cardLayout.show(panelContent, "THONG_KE"));
         btnNhapKho.addActionListener(e -> cardLayout.show(panelContent, "NHAP_KHO"));
+        btnGoiYNhapHang.addActionListener(e -> cardLayout.show(panelContent, "GOI_Y_NHAP_HANG"));
         btnBanHang.addActionListener(e -> cardLayout.show(panelContent, "BAN_HANG"));
         btnThuocKH.addActionListener(e -> cardLayout.show(panelContent, "THUOC_KH"));
         btnDanhMuc.addActionListener(e -> cardLayout.show(panelContent, "DANH_MUC"));

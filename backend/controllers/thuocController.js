@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 
 // ==========================================
-// 1. QUẢN LÝ THUỐC (Logic kiểm tra quy về SQL)
+// 1. QUẢN LÝ THUỐC (Đã tích hợp khóa ngoại LoaiThuoc)
 // ==========================================
 
 // GET /api/thuoc
@@ -16,9 +16,12 @@ const getDanhSachThuoc = async (req, res) => {
                 t.SoLuongTon,
                 t.MaHangSX, 
                 h.TenHang, 
-                h.QuocGia
+                h.QuocGia,
+                t.MaLoai,
+                lt.TenLoai
             FROM thuoc t
             LEFT JOIN hangsx h ON t.MaHangSX = h.MaHangSX
+            LEFT JOIN loaithuoc lt ON t.MaLoai = lt.MaLoai
             ORDER BY t.MaThuoc DESC
         `;
         const [rows] = await pool.query(sql);
@@ -35,19 +38,19 @@ const getDanhSachThuoc = async (req, res) => {
 // POST /api/thuoc
 const createThuoc = async (req, res) => {
     try {
-        const { TenThuoc, DonViTinh, GiaBan, MaHangSX } = req.body;
+        const { TenThuoc, DonViTinh, GiaBan, MaHangSX, MaLoai } = req.body;
         const giaBanParam = (GiaBan === undefined || GiaBan === null) ? '' : String(GiaBan);
 
         const [rows] = await pool.query(
-            'CALL sp_ThemThuoc(?, ?, ?, ?)',
-            [TenThuoc ?? '', DonViTinh ?? '', giaBanParam, MaHangSX || null]
+            'CALL sp_ThemThuoc(?, ?, ?, ?, ?)',
+            [TenThuoc ?? '', DonViTinh ?? '', giaBanParam, MaHangSX || null, MaLoai || null]
         );
         const maThuoc = rows[0]?.[0]?.MaThuoc || null;
 
         return res.status(201).json({
             success: true,
             message: 'Thêm thuốc thành công',
-            data: { MaThuoc: maThuoc, TenThuoc, DonViTinh, GiaBan: Number(GiaBan), SoLuongTon: 0, MaHangSX }
+            data: { MaThuoc: maThuoc, TenThuoc, DonViTinh, GiaBan: Number(GiaBan), SoLuongTon: 0, MaHangSX, MaLoai }
         });
     } catch (error) {
         if (error.sqlState === '45000' || error.errno === 1644) {
@@ -65,12 +68,12 @@ const createThuoc = async (req, res) => {
 const updateThuoc = async (req, res) => {
     try {
         const { id } = req.params;
-        const { TenThuoc, DonViTinh, GiaBan, MaHangSX } = req.body;
+        const { TenThuoc, DonViTinh, GiaBan, MaHangSX, MaLoai } = req.body;
         const giaBanParam = (GiaBan === undefined || GiaBan === null) ? '' : String(GiaBan);
 
         await pool.query(
-            'CALL sp_CapNhatThuoc(?, ?, ?, ?, ?)',
-            [id, TenThuoc ?? '', DonViTinh ?? '', giaBanParam, MaHangSX || null]
+            'CALL sp_CapNhatThuoc(?, ?, ?, ?, ?, ?)',
+            [id, TenThuoc ?? '', DonViTinh ?? '', giaBanParam, MaHangSX || null, MaLoai || null]
         );
 
         return res.status(200).json({
@@ -104,12 +107,19 @@ const deleteThuoc = async (req, res) => {
             data: null
         });
     } catch (error) {
+        if (error.sqlState === '45000' || error.errno === 1644) {
+            return res.status(400).json({
+                success: false,
+                message: error.sqlMessage || error.message,
+                data: null
+            });
+        }
         return res.status(500).json({ success: false, message: error.message, data: null });
     }
 };
 
 // ==========================================
-// 2. QUẢN LÝ LOẠI THUỐC (Giữ nguyên)
+// 2. QUẢN LÝ LOẠI THUỐC (Bắt lỗi Trigger 45000)
 // ==========================================
 
 const getDanhSachLoaiThuoc = async (req, res) => {
@@ -138,6 +148,9 @@ const createLoaiThuoc = async (req, res) => {
             data: { MaLoai: result.insertId, TenLoai, DonViTinh }
         });
     } catch (error) {
+        if (error.sqlState === '45000' || error.errno === 1644) {
+            return res.status(400).json({ success: false, message: error.sqlMessage || error.message, data: null });
+        }
         return res.status(500).json({ success: false, message: error.message, data: null });
     }
 };
@@ -159,6 +172,9 @@ const updateLoaiThuoc = async (req, res) => {
             data: null
         });
     } catch (error) {
+        if (error.sqlState === '45000' || error.errno === 1644) {
+            return res.status(400).json({ success: false, message: error.sqlMessage || error.message, data: null });
+        }
         return res.status(500).json({ success: false, message: error.message, data: null });
     }
 };
@@ -176,12 +192,15 @@ const deleteLoaiThuoc = async (req, res) => {
             data: null
         });
     } catch (error) {
+        if (error.sqlState === '45000' || error.errno === 1644) {
+            return res.status(400).json({ success: false, message: error.sqlMessage || error.message, data: null });
+        }
         return res.status(500).json({ success: false, message: error.message, data: null });
     }
 };
 
 // ==========================================
-// 3. QUẢN LÝ KHÁCH HÀNG (Giữ nguyên)
+// 3. QUẢN LÝ KHÁCH HÀNG
 // ==========================================
 
 const getDanhSachKhachHang = async (req, res) => {
@@ -236,6 +255,9 @@ const deleteKhachHang = async (req, res) => {
         if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Không tìm thấy khách hàng' });
         return res.status(200).json({ success: true, message: 'Xóa thành công' });
     } catch (error) {
+        if (error.sqlState === '45000' || error.errno === 1644) {
+            return res.status(400).json({ success: false, message: error.sqlMessage || error.message, data: null });
+        }
         return res.status(500).json({ success: false, message: error.message });
     }
 };

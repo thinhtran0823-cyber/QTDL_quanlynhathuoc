@@ -19,8 +19,6 @@
 -- Current Database: `quanlynhathuoc`
 --
 
-/*!40000 DROP DATABASE IF EXISTS `quanlynhathuoc`*/;
-
 CREATE DATABASE /*!32312 IF NOT EXISTS*/ `quanlynhathuoc` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 
 USE `quanlynhathuoc`;
@@ -313,6 +311,26 @@ LOCK TABLES `khachhang` WRITE;
 INSERT INTO `khachhang` VALUES (1,'Nguyễn Văn An','0988123456','123 Lý Thường Kiệt, Q.10, TP.HCM',15),(2,'Trần Thị Bích','0912345678','45 Lê Lợi, Q.1, TP.HCM',50),(3,'Lê Hoàng Nam','0903111222','78 Nguyễn Trãi, Q.5, TP.HCM',0),(4,'Phạm Thị Mai','0977888999','12 Đường số 5, Q.Bình Thạnh, TP.HCM',100),(5,'Thu Trang','0786956078','34/4 An Hòa',0);
 /*!40000 ALTER TABLE `khachhang` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_KH_BD_KiemTra` BEFORE DELETE ON `khachhang` FOR EACH ROW BEGIN
+    IF EXISTS (SELECT 1 FROM HoaDon WHERE MaKH = OLD.MaKH) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Không thể xóa khách hàng này vì đã có lịch sử hóa đơn mua hàng!';
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `loaithuoc`
@@ -338,6 +356,95 @@ LOCK TABLES `loaithuoc` WRITE;
 INSERT INTO `loaithuoc` VALUES (1,'Kháng sinh','Hộp'),(2,'Giảm đau - Hạ sốt','Vỉ'),(3,'Vitamin & TTPCN','Chai'),(4,'Siro ho','Chai'),(5,'Dụng cụ y tế','Hộp'),(6,'Thuốc ABC','Chai');
 /*!40000 ALTER TABLE `loaithuoc` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_LoaiThuoc_BI_KiemTra` BEFORE INSERT ON `loaithuoc` FOR EACH ROW BEGIN
+    SET NEW.TenLoai = TRIM(COALESCE(NEW.TenLoai, ''));
+    SET NEW.DonViTinh = TRIM(COALESCE(NEW.DonViTinh, ''));
+
+    IF NEW.TenLoai = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Tên loại thuốc không được để trống!';
+    END IF;
+
+    IF NEW.DonViTinh = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Đơn vị tính mặc định của loại thuốc không được để trống!';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM LoaiThuoc WHERE LOWER(TenLoai) = LOWER(NEW.TenLoai)) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Tên loại thuốc này đã tồn tại trong hệ thống!';
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_LoaiThuoc_BU_KiemTra` BEFORE UPDATE ON `loaithuoc` FOR EACH ROW BEGIN
+    SET NEW.TenLoai = TRIM(COALESCE(NEW.TenLoai, ''));
+    SET NEW.DonViTinh = TRIM(COALESCE(NEW.DonViTinh, ''));
+
+    IF NEW.TenLoai = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Tên loại thuốc không được để trống!';
+    END IF;
+
+    IF NEW.DonViTinh = '' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Đơn vị tính mặc định không được để trống!';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM LoaiThuoc 
+        WHERE LOWER(TenLoai) = LOWER(NEW.TenLoai) AND MaLoai <> OLD.MaLoai
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Tên loại thuốc bị trùng với loại thuốc khác!';
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_LoaiThuoc_BD_KiemTra` BEFORE DELETE ON `loaithuoc` FOR EACH ROW BEGIN
+    IF EXISTS (SELECT 1 FROM Thuoc WHERE MaLoai = OLD.MaLoai) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Không thể xóa loại thuốc này vì đang có thuốc thuộc loại này trong danh mục!';
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `lothuoc`
@@ -441,6 +548,31 @@ DELIMITER ;;
     UPDATE Thuoc
     SET SoLuongTon = SoLuongTon + NEW.SoLuongTon
     WHERE MaThuoc = NEW.MaThuoc;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_LT_BD_KiemTra` BEFORE DELETE ON `lothuoc` FOR EACH ROW BEGIN
+    IF EXISTS (SELECT 1 FROM ChiTietHoaDon WHERE MaLo = OLD.MaLo) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Không thể xóa lô thuốc này vì đã có dữ liệu trong hóa đơn bán hàng!';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM ChiTietPhieuNhap WHERE MaLo = OLD.MaLo) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Không thể xóa lô thuốc này vì đã có dữ liệu trong phiếu nhập kho!';
+    END IF;
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -826,10 +958,13 @@ CREATE TABLE `thuoc` (
   `GiaBan` decimal(15,2) NOT NULL DEFAULT '0.00',
   `SoLuongTon` int NOT NULL DEFAULT '0',
   `MaHangSX` int DEFAULT NULL,
+  `MaLoai` int DEFAULT NULL,
   PRIMARY KEY (`MaThuoc`),
   KEY `MaHangSX` (`MaHangSX`),
+  KEY `fk_Thuoc_LoaiThuoc` (`MaLoai`),
+  CONSTRAINT `fk_Thuoc_LoaiThuoc` FOREIGN KEY (`MaLoai`) REFERENCES `loaithuoc` (`MaLoai`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `thuoc_ibfk_1` FOREIGN KEY (`MaHangSX`) REFERENCES `hangsx` (`MaHangSX`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -838,7 +973,7 @@ CREATE TABLE `thuoc` (
 
 LOCK TABLES `thuoc` WRITE;
 /*!40000 ALTER TABLE `thuoc` DISABLE KEYS */;
-INSERT INTO `thuoc` VALUES (1,'Paracetamol 500mg','Hộp',65000.00,150,1),(2,'Amoxicillin 500mg','Hộp',115000.00,579,1),(3,'Panadol Extra','Vỉ',18000.00,126,2),(4,'Efferalgan 500mg','Hộp',72000.00,40,5),(7,'Payemal 500 gram','Hộp',54000.00,0,3);
+INSERT INTO `thuoc` VALUES (1,'Paracetamol 500mg','Hộp',65000.00,150,1,2),(2,'Amoxicillin 500mg','Hộp',115000.00,579,1,5),(3,'Panadol Extra','Vỉ',18000.00,126,2,1),(4,'Efferalgan 500mg','Hộp',72000.00,40,5,3),(7,'Payemal 500 gram','Hộp',54000.00,0,3,1);
 /*!40000 ALTER TABLE `thuoc` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -909,6 +1044,67 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trg_Thuoc_BD_KiemTra` BEFORE DELETE ON `thuoc` FOR EACH ROW BEGIN
+    IF EXISTS (
+        SELECT 1 
+        FROM ChiTietHoaDon cthd
+        JOIN LoThuoc lt ON cthd.MaLo = lt.MaLo
+        WHERE lt.MaThuoc = OLD.MaThuoc
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Không thể xóa thuốc này vì đã phát sinh giao dịch trong hóa đơn bán hàng!';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1 
+        FROM ChiTietPhieuNhap ctpn
+        JOIN LoThuoc lt ON ctpn.MaLo = lt.MaLo
+        WHERE lt.MaThuoc = OLD.MaThuoc
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Không thể xóa thuốc này vì đã có lịch sử nhập kho!';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM LoThuoc WHERE MaThuoc = OLD.MaThuoc) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Không thể xóa thuốc này vì đang tồn tại lô thuốc trong hệ thống!';
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Temporary view structure for view `v_canhbaonhaphang`
+--
+
+DROP TABLE IF EXISTS `v_canhbaonhaphang`;
+/*!50001 DROP VIEW IF EXISTS `v_canhbaonhaphang`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `v_canhbaonhaphang` AS SELECT 
+ 1 AS `MaThuoc`,
+ 1 AS `TenThuoc`,
+ 1 AS `DonViTinh`,
+ 1 AS `TenHang`,
+ 1 AS `GiaBan`,
+ 1 AS `TonKhaDung`,
+ 1 AS `TonHetHan`,
+ 1 AS `DaBan30Ngay`,
+ 1 AS `DeXuatNhapThem`,
+ 1 AS `TrangThaiCanhBao`*/;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Temporary view structure for view `v_lothuoc_tinhtrang`
@@ -938,6 +1134,129 @@ SET character_set_client = @saved_cs_client;
 --
 -- Dumping routines for database 'quanlynhathuoc'
 --
+/*!50003 DROP FUNCTION IF EXISTS `fn_SoLuongBanTrongNgay` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` FUNCTION `fn_SoLuongBanTrongNgay`(p_MaThuoc INT, p_SoNgay INT) RETURNS int
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+    DECLARE v_TongBan INT DEFAULT 0;
+
+    SELECT COALESCE(SUM(cthd.SoLuongBan), 0) INTO v_TongBan
+    FROM ChiTietHoaDon cthd
+    JOIN HoaDon hd ON cthd.MaHD = hd.MaHD
+    JOIN LoThuoc lt ON cthd.MaLo = lt.MaLo
+    WHERE lt.MaThuoc = p_MaThuoc
+      AND hd.NgayLap >= DATE_SUB(CURDATE(), INTERVAL p_SoNgay DAY);
+
+    RETURN v_TongBan;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP FUNCTION IF EXISTS `fn_TinhLoiNhuanRong` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` FUNCTION `fn_TinhLoiNhuanRong`() RETURNS decimal(15,2)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+    DECLARE v_DoanhThu DECIMAL(15,2);
+    DECLARE v_GiaVon DECIMAL(15,2);
+    DECLARE v_ThietHai DECIMAL(15,2);
+
+    SELECT COALESCE(SUM(TongTien), 0) INTO v_DoanhThu FROM HoaDon;
+
+    SELECT COALESCE(SUM(cthd.SoLuongBan * lt.GiaNhap), 0)
+    INTO v_GiaVon
+    FROM ChiTietHoaDon cthd
+    JOIN LoThuoc lt ON cthd.MaLo = lt.MaLo;
+
+    SET v_ThietHai = fn_TongThietHaiHetHan();
+
+    RETURN v_DoanhThu - v_GiaVon - v_ThietHai;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP FUNCTION IF EXISTS `fn_TongThietHaiHetHan` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` FUNCTION `fn_TongThietHaiHetHan`() RETURNS decimal(15,2)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+    DECLARE v_TongThietHai DECIMAL(15,2);
+    SELECT COALESCE(SUM(SoLuongTon * GiaNhap), 0)
+    INTO v_TongThietHai
+    FROM LoThuoc
+    WHERE HanSuDung < CURDATE() AND SoLuongTon > 0;
+    RETURN v_TongThietHai;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP FUNCTION IF EXISTS `fn_TrangThaiHanLoThuoc` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` FUNCTION `fn_TrangThaiHanLoThuoc`(p_MaLo INT) RETURNS varchar(30) CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+    DECLARE v_SoNgay INT;
+    SELECT DATEDIFF(HanSuDung, CURDATE()) INTO v_SoNgay
+    FROM LoThuoc WHERE MaLo = p_MaLo;
+
+    IF v_SoNgay IS NULL THEN
+        RETURN 'KHONG_TON_TAI';
+    ELSEIF v_SoNgay < 0 THEN
+        RETURN 'HET_HAN';
+    ELSEIF v_SoNgay <= 30 THEN
+        RETURN 'SAP_HET_HAN';
+    ELSE
+        RETURN 'CON_HAN';
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `sp_CapNhatThuoc` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -950,42 +1269,43 @@ SET character_set_client = @saved_cs_client;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_CapNhatThuoc`(
     IN p_MaThuoc INT,
-    IN p_TenThuoc VARCHAR(200),
+    IN p_TenThuoc VARCHAR(150),
     IN p_DonViTinh VARCHAR(50),
     IN p_GiaBan VARCHAR(50),
-    IN p_MaHangSX INT
+    IN p_MaHangSX INT,
+    IN p_MaLoai INT
 )
 BEGIN
+    DECLARE v_GiaBan DECIMAL(15,2);
+
     IF NOT EXISTS (SELECT 1 FROM Thuoc WHERE MaThuoc = p_MaThuoc) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Không tìm thấy thuốc cần cập nhật';
+        SET MESSAGE_TEXT = 'Không tìm thấy thuốc cần cập nhật!';
     END IF;
 
-    IF p_TenThuoc IS NULL OR TRIM(p_TenThuoc) = '' THEN
+    IF TRIM(COALESCE(p_GiaBan, '')) = '' OR p_GiaBan NOT REGEXP '^[0-9]+(\\.[0-9]+)?$' THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Tên thuốc không được để trống';
+        SET MESSAGE_TEXT = 'Giá bán phải là số hợp lệ và không được âm!';
     END IF;
 
-    IF p_DonViTinh IS NULL OR TRIM(p_DonViTinh) = '' THEN
+    SET v_GiaBan = CAST(p_GiaBan AS DECIMAL(15,2));
+
+    IF p_MaHangSX IS NOT NULL AND NOT EXISTS (SELECT 1 FROM HangSX WHERE MaHangSX = p_MaHangSX) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Đơn vị tính không được để trống';
+        SET MESSAGE_TEXT = 'Hãng sản xuất được chọn không tồn tại!';
     END IF;
 
-    IF p_GiaBan IS NULL OR TRIM(p_GiaBan) = '' OR TRIM(p_GiaBan) NOT REGEXP '^-?[0-9]+(\\.[0-9]+)?$' THEN
+    IF p_MaLoai IS NOT NULL AND NOT EXISTS (SELECT 1 FROM LoaiThuoc WHERE MaLoai = p_MaLoai) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Giá bán không được để trống và phải là số hợp lệ';
-    END IF;
-
-    IF CAST(TRIM(p_GiaBan) AS DECIMAL(15,2)) < 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Giá bán không được nhỏ hơn 0';
+        SET MESSAGE_TEXT = 'Loại thuốc được chọn không tồn tại!';
     END IF;
 
     UPDATE Thuoc
-    SET TenThuoc = TRIM(p_TenThuoc),
-        DonViTinh = TRIM(p_DonViTinh),
-        GiaBan = CAST(TRIM(p_GiaBan) AS DECIMAL(15,2)),
-        MaHangSX = p_MaHangSX
+    SET TenThuoc = p_TenThuoc,
+        DonViTinh = p_DonViTinh,
+        GiaBan = v_GiaBan,
+        MaHangSX = p_MaHangSX,
+        MaLoai = p_MaLoai
     WHERE MaThuoc = p_MaThuoc;
 END ;;
 DELIMITER ;
@@ -1146,34 +1466,34 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_ThemThuoc`(
-    IN p_TenThuoc VARCHAR(200),
+    IN p_TenThuoc VARCHAR(150),
     IN p_DonViTinh VARCHAR(50),
     IN p_GiaBan VARCHAR(50),
-    IN p_MaHangSX INT
+    IN p_MaHangSX INT,
+    IN p_MaLoai INT
 )
 BEGIN
-    IF p_TenThuoc IS NULL OR TRIM(p_TenThuoc) = '' THEN
+    DECLARE v_GiaBan DECIMAL(15,2);
+
+    IF TRIM(COALESCE(p_GiaBan, '')) = '' OR p_GiaBan NOT REGEXP '^[0-9]+(\\.[0-9]+)?$' THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Tên thuốc không được để trống';
+        SET MESSAGE_TEXT = 'Giá bán phải là số hợp lệ và không được âm!';
     END IF;
 
-    IF p_DonViTinh IS NULL OR TRIM(p_DonViTinh) = '' THEN
+    SET v_GiaBan = CAST(p_GiaBan AS DECIMAL(15,2));
+
+    IF p_MaHangSX IS NOT NULL AND NOT EXISTS (SELECT 1 FROM HangSX WHERE MaHangSX = p_MaHangSX) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Đơn vị tính không được để trống';
+        SET MESSAGE_TEXT = 'Hãng sản xuất được chọn không tồn tại!';
     END IF;
 
-    IF p_GiaBan IS NULL OR TRIM(p_GiaBan) = '' OR TRIM(p_GiaBan) NOT REGEXP '^-?[0-9]+(\\.[0-9]+)?$' THEN
+    IF p_MaLoai IS NOT NULL AND NOT EXISTS (SELECT 1 FROM LoaiThuoc WHERE MaLoai = p_MaLoai) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Giá bán không được để trống và phải là số hợp lệ';
+        SET MESSAGE_TEXT = 'Loại thuốc được chọn không tồn tại!';
     END IF;
 
-    IF CAST(TRIM(p_GiaBan) AS DECIMAL(15,2)) < 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Giá bán không được nhỏ hơn 0';
-    END IF;
-
-    INSERT INTO Thuoc (TenThuoc, DonViTinh, GiaBan, SoLuongTon, MaHangSX)
-    VALUES (TRIM(p_TenThuoc), TRIM(p_DonViTinh), CAST(TRIM(p_GiaBan) AS DECIMAL(15,2)), 0, p_MaHangSX);
+    INSERT INTO Thuoc (TenThuoc, DonViTinh, GiaBan, SoLuongTon, MaHangSX, MaLoai)
+    VALUES (p_TenThuoc, p_DonViTinh, v_GiaBan, 0, p_MaHangSX, p_MaLoai);
 
     SELECT LAST_INSERT_ID() AS MaThuoc;
 END ;;
@@ -1308,6 +1628,24 @@ DELIMITER ;
 USE `quanlynhathuoc`;
 
 --
+-- Final view structure for view `v_canhbaonhaphang`
+--
+
+/*!50001 DROP VIEW IF EXISTS `v_canhbaonhaphang`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `v_canhbaonhaphang` AS select `t`.`MaThuoc` AS `MaThuoc`,`t`.`TenThuoc` AS `TenThuoc`,`t`.`DonViTinh` AS `DonViTinh`,coalesce(`hsx`.`TenHang`,'Chưa rõ hãng') AS `TenHang`,`t`.`GiaBan` AS `GiaBan`,coalesce(sum((case when ((`lt`.`HanSuDung` > curdate()) and (`lt`.`TrangThai` = 1)) then `lt`.`SoLuongTon` else 0 end)),0) AS `TonKhaDung`,coalesce(sum((case when (`lt`.`HanSuDung` <= curdate()) then `lt`.`SoLuongTon` else 0 end)),0) AS `TonHetHan`,`fn_SoLuongBanTrongNgay`(`t`.`MaThuoc`,30) AS `DaBan30Ngay`,greatest(0,((30 + `fn_SoLuongBanTrongNgay`(`t`.`MaThuoc`,30)) - coalesce(sum((case when ((`lt`.`HanSuDung` > curdate()) and (`lt`.`TrangThai` = 1)) then `lt`.`SoLuongTon` else 0 end)),0))) AS `DeXuatNhapThem`,(case when (coalesce(sum((case when ((`lt`.`HanSuDung` > curdate()) and (`lt`.`TrangThai` = 1)) then `lt`.`SoLuongTon` else 0 end)),0) = 0) then 'HET_HANG' when (coalesce(sum((case when ((`lt`.`HanSuDung` > curdate()) and (`lt`.`TrangThai` = 1)) then `lt`.`SoLuongTon` else 0 end)),0) < 20) then 'TON_THAP' when (`fn_SoLuongBanTrongNgay`(`t`.`MaThuoc`,30) >= 20) then 'BAN_CHAY' else 'AN_TOAN' end) AS `TrangThaiCanhBao` from ((`thuoc` `t` left join `hangsx` `hsx` on((`t`.`MaHangSX` = `hsx`.`MaHangSX`))) left join `lothuoc` `lt` on((`t`.`MaThuoc` = `lt`.`MaThuoc`))) group by `t`.`MaThuoc`,`t`.`TenThuoc`,`t`.`DonViTinh`,`hsx`.`TenHang`,`t`.`GiaBan` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
 -- Final view structure for view `v_lothuoc_tinhtrang`
 --
 
@@ -1334,4 +1672,4 @@ USE `quanlynhathuoc`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-19 18:18:42
+-- Dump completed on 2026-11-26  3:29:35

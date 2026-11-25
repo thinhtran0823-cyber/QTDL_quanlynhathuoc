@@ -8,9 +8,10 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 
 public class ThuocPanel extends JPanel {
-    // Tab 1: Thuốc (Không nhập Giá Nhập và Số Lượng Tồn)
+    // Tab 1: Thuốc
     private JTextField txtMaThuoc, txtTenThuoc, txtDVTThuoc, txtGiaBan, txtTimThuoc;
     private JComboBox<HangItem> cboHangSX;
+    private JComboBox<LoaiItem> cboLoaiThuoc;
     private JTable tblThuoc;
     private DefaultTableModel modelThuoc;
     private TableRowSorter<DefaultTableModel> sorterThuoc;
@@ -32,6 +33,7 @@ public class ThuocPanel extends JPanel {
         add(tabbedPane, BorderLayout.CENTER);
 
         taiDanhSachHangSX();
+        taiDanhSachLoaiThuocCombo();
         taiDuLieuThuoc();
         taiDuLieuLoaiThuoc();
     }
@@ -47,7 +49,23 @@ public class ThuocPanel extends JPanel {
 
         @Override
         public String toString() {
-            return id + " - " + ten;
+            return id.isEmpty() ? ten : id + " - " + ten;
+        }
+    }
+
+    // Class phụ lưu Mã, Tên & ĐVT mặc định của Loại Thuốc cho JComboBox
+    private static class LoaiItem {
+        String id, ten, dvtMacDinh;
+
+        LoaiItem(String id, String ten, String dvtMacDinh) {
+            this.id = id;
+            this.ten = ten;
+            this.dvtMacDinh = dvtMacDinh;
+        }
+
+        @Override
+        public String toString() {
+            return id.isEmpty() ? ten : id + " - " + ten;
         }
     }
 
@@ -65,25 +83,34 @@ public class ThuocPanel extends JPanel {
         txtDVTThuoc = new JTextField();
         txtGiaBan = new JTextField("0");
         cboHangSX = new JComboBox<>();
+        cboLoaiThuoc = new JComboBox<>();
+
+        // Tự động gợi ý Đơn vị tính mặc định khi chọn Loại thuốc (nếu ô ĐVT đang trống)
+        cboLoaiThuoc.addActionListener(e -> {
+            LoaiItem selected = (LoaiItem) cboLoaiThuoc.getSelectedItem();
+            if (selected != null && !selected.id.isEmpty() && txtDVTThuoc.getText().trim().isEmpty()) {
+                txtDVTThuoc.setText(selected.dvtMacDinh);
+            }
+        });
 
         pnlForm.add(new JLabel("Mã Thuốc:"));
         pnlForm.add(txtMaThuoc);
         pnlForm.add(new JLabel("Tên Thuốc (*):"));
         pnlForm.add(txtTenThuoc);
+        pnlForm.add(new JLabel("Loại Thuốc:"));
+        pnlForm.add(cboLoaiThuoc);
         pnlForm.add(new JLabel("Đơn Vị Tính (*):"));
         pnlForm.add(txtDVTThuoc);
         pnlForm.add(new JLabel("Hãng Sản Xuất:"));
         pnlForm.add(cboHangSX);
         pnlForm.add(new JLabel("Giá Bán (*):"));
         pnlForm.add(txtGiaBan);
-        pnlForm.add(new JLabel(""));
-        pnlForm.add(new JLabel(""));
 
         JPanel pnlAction = new JPanel(new BorderLayout());
         JPanel pnlSearch = new JPanel(new FlowLayout(FlowLayout.LEFT));
         txtTimThuoc = new JTextField(18);
         JButton btnTim = new JButton("Tìm kiếm");
-        pnlSearch.add(new JLabel("Tìm tên thuốc/hãng:"));
+        pnlSearch.add(new JLabel("Tìm tên thuốc/loại/hãng:"));
         pnlSearch.add(txtTimThuoc);
         pnlSearch.add(btnTim);
 
@@ -105,7 +132,9 @@ public class ThuocPanel extends JPanel {
         pnlTop.add(pnlAction, BorderLayout.SOUTH);
 
         modelThuoc = new DefaultTableModel(
-                new String[] { "Mã", "Tên Thuốc", "ĐVT", "Giá Bán", "Tồn Tổng", "Mã Hãng", "Hãng Sản Xuất" }, 0) {
+                new String[] { "Mã", "Tên Thuốc", "Mã Loại", "Loại Thuốc", "ĐVT", "Giá Bán", "Tồn Tổng", "Mã Hãng",
+                        "Hãng Sản Xuất" },
+                0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -115,16 +144,32 @@ public class ThuocPanel extends JPanel {
         sorterThuoc = new TableRowSorter<>(modelThuoc);
         tblThuoc.setRowSorter(sorterThuoc);
 
+        // Thu gọn độ rộng cột Mã Loại và Mã Hãng cho bảng thoáng đẹp
+        tblThuoc.getColumnModel().getColumn(0).setPreferredWidth(45);
+        tblThuoc.getColumnModel().getColumn(2).setPreferredWidth(55);
+        tblThuoc.getColumnModel().getColumn(7).setPreferredWidth(55);
+
         tblThuoc.getSelectionModel().addListSelectionListener(e -> {
             int viewRow = tblThuoc.getSelectedRow();
             if (viewRow >= 0) {
                 int row = tblThuoc.convertRowIndexToModel(viewRow);
                 txtMaThuoc.setText(modelThuoc.getValueAt(row, 0).toString());
                 txtTenThuoc.setText(modelThuoc.getValueAt(row, 1).toString());
-                txtDVTThuoc.setText(modelThuoc.getValueAt(row, 2).toString());
-                txtGiaBan.setText(modelThuoc.getValueAt(row, 3).toString());
 
-                String maHang = modelThuoc.getValueAt(row, 5).toString();
+                String maLoai = modelThuoc.getValueAt(row, 2).toString();
+                cboLoaiThuoc.setSelectedIndex(0);
+                for (int i = 0; i < cboLoaiThuoc.getItemCount(); i++) {
+                    if (cboLoaiThuoc.getItemAt(i).id.equals(maLoai)) {
+                        cboLoaiThuoc.setSelectedIndex(i);
+                        break;
+                    }
+                }
+
+                txtDVTThuoc.setText(modelThuoc.getValueAt(row, 4).toString());
+                txtGiaBan.setText(modelThuoc.getValueAt(row, 5).toString());
+
+                String maHang = modelThuoc.getValueAt(row, 7).toString();
+                cboHangSX.setSelectedIndex(0);
                 for (int i = 0; i < cboHangSX.getItemCount(); i++) {
                     if (cboHangSX.getItemAt(i).id.equals(maHang)) {
                         cboHangSX.setSelectedIndex(i);
@@ -143,11 +188,13 @@ public class ThuocPanel extends JPanel {
         btnLamMoi.addActionListener(e -> {
             xoaFormThuoc();
             taiDanhSachHangSX();
+            taiDanhSachLoaiThuocCombo();
             taiDuLieuThuoc();
         });
         btnTim.addActionListener(e -> {
             String kw = txtTimThuoc.getText().trim();
-            sorterThuoc.setRowFilter(kw.isEmpty() ? null : RowFilter.regexFilter("(?i)" + kw, 1, 6));
+            // Tìm trên cột 1 (Tên Thuốc), cột 3 (Loại Thuốc), cột 8 (Hãng SX)
+            sorterThuoc.setRowFilter(kw.isEmpty() ? null : RowFilter.regexFilter("(?i)" + kw, 1, 3, 8));
         });
 
         return panel;
@@ -157,6 +204,7 @@ public class ThuocPanel extends JPanel {
         try {
             String res = ApiClient.sendGet("/danh-muc/hang-sx");
             cboHangSX.removeAllItems();
+            cboHangSX.addItem(new HangItem("", "-- Chọn Hãng SX --"));
             if (res.contains("\"success\":true")) {
                 String[] items = res.split("\\}\\,\\{");
                 for (String item : items) {
@@ -164,6 +212,26 @@ public class ThuocPanel extends JPanel {
                     String ten = extractVal(item, "TenHang");
                     if (!id.isEmpty())
                         cboHangSX.addItem(new HangItem(id, ten));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void taiDanhSachLoaiThuocCombo() {
+        try {
+            String res = ApiClient.sendGet("/loai-thuoc");
+            cboLoaiThuoc.removeAllItems();
+            cboLoaiThuoc.addItem(new LoaiItem("", "-- Chọn Loại Thuốc --", ""));
+            if (res.contains("\"success\":true")) {
+                String[] items = res.split("\\}\\,\\{");
+                for (String item : items) {
+                    String id = extractVal(item, "MaLoai");
+                    String ten = extractVal(item, "TenLoai");
+                    String dvt = extractVal(item, "DonViTinh");
+                    if (!id.isEmpty())
+                        cboLoaiThuoc.addItem(new LoaiItem(id, ten, dvt));
                 }
             }
         } catch (Exception e) {
@@ -180,14 +248,25 @@ public class ThuocPanel extends JPanel {
                 for (String item : items) {
                     String id = extractVal(item, "MaThuoc");
                     String ten = extractVal(item, "TenThuoc");
+                    String maLoai = extractVal(item, "MaLoai");
+                    String tenLoai = extractVal(item, "TenLoai");
                     String dvt = extractVal(item, "DonViTinh");
                     String giaBan = extractVal(item, "GiaBan");
                     String ton = extractVal(item, "SoLuongTon");
                     String maHang = extractVal(item, "MaHangSX");
                     String tenHang = extractVal(item, "TenHang");
                     if (!id.isEmpty()) {
-                        modelThuoc.addRow(new Object[] { id, ten, dvt, giaBan, ton, maHang,
-                                tenHang.equals("null") ? "" : tenHang });
+                        modelThuoc.addRow(new Object[] {
+                                id,
+                                ten,
+                                maLoai.equals("null") ? "" : maLoai,
+                                tenLoai.equals("null") ? "" : tenLoai,
+                                dvt,
+                                giaBan,
+                                ton,
+                                maHang.equals("null") ? "" : maHang,
+                                tenHang.equals("null") ? "" : tenHang
+                        });
                     }
                 }
             }
@@ -199,13 +278,18 @@ public class ThuocPanel extends JPanel {
     private void themThuoc() {
         try {
             HangItem selectedHang = (HangItem) cboHangSX.getSelectedItem();
-            String maHang = selectedHang != null ? selectedHang.id : "null";
+            String maHang = (selectedHang != null && !selectedHang.id.isEmpty()) ? selectedHang.id : "null";
+
+            LoaiItem selectedLoai = (LoaiItem) cboLoaiThuoc.getSelectedItem();
+            String maLoai = (selectedLoai != null && !selectedLoai.id.isEmpty()) ? selectedLoai.id : "null";
+
             String payload = String.format(
-                    "{\"TenThuoc\":\"%s\",\"DonViTinh\":\"%s\",\"GiaBan\":\"%s\",\"MaHangSX\":%s}",
+                    "{\"TenThuoc\":\"%s\",\"DonViTinh\":\"%s\",\"GiaBan\":\"%s\",\"MaHangSX\":%s,\"MaLoai\":%s}",
                     esc(txtTenThuoc.getText().trim()),
                     esc(txtDVTThuoc.getText().trim()),
                     esc(txtGiaBan.getText().trim()),
-                    maHang);
+                    maHang,
+                    maLoai);
             String res = ApiClient.sendPost("/thuoc", payload);
             if (res.contains("\"success\":true")) {
                 JOptionPane.showMessageDialog(this, "Thêm thuốc thành công!");
@@ -230,13 +314,18 @@ public class ThuocPanel extends JPanel {
         }
         try {
             HangItem selectedHang = (HangItem) cboHangSX.getSelectedItem();
-            String maHang = selectedHang != null ? selectedHang.id : "null";
+            String maHang = (selectedHang != null && !selectedHang.id.isEmpty()) ? selectedHang.id : "null";
+
+            LoaiItem selectedLoai = (LoaiItem) cboLoaiThuoc.getSelectedItem();
+            String maLoai = (selectedLoai != null && !selectedLoai.id.isEmpty()) ? selectedLoai.id : "null";
+
             String payload = String.format(
-                    "{\"TenThuoc\":\"%s\",\"DonViTinh\":\"%s\",\"GiaBan\":\"%s\",\"MaHangSX\":%s}",
+                    "{\"TenThuoc\":\"%s\",\"DonViTinh\":\"%s\",\"GiaBan\":\"%s\",\"MaHangSX\":%s,\"MaLoai\":%s}",
                     esc(txtTenThuoc.getText().trim()),
                     esc(txtDVTThuoc.getText().trim()),
                     esc(txtGiaBan.getText().trim()),
-                    maHang);
+                    maHang,
+                    maLoai);
             String res = ApiClient.sendPut("/thuoc/" + id, payload);
             if (res.contains("\"success\":true")) {
                 JOptionPane.showMessageDialog(this, "Cập nhật thuốc thành công!");
@@ -268,7 +357,9 @@ public class ThuocPanel extends JPanel {
                 taiDuLieuThuoc();
                 xoaFormThuoc();
             } else {
-                JOptionPane.showMessageDialog(this, "Không thể xóa thuốc đang có dữ liệu nhập/bán!", "Lỗi",
+                String msg = extractVal(res, "message");
+                JOptionPane.showMessageDialog(this,
+                        msg.isEmpty() ? "Không thể xóa thuốc đang có dữ liệu nhập/bán!" : msg, "Lỗi",
                         JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
@@ -282,12 +373,16 @@ public class ThuocPanel extends JPanel {
         txtDVTThuoc.setText("");
         txtGiaBan.setText("0");
         txtTimThuoc.setText("");
+        if (cboHangSX.getItemCount() > 0)
+            cboHangSX.setSelectedIndex(0);
+        if (cboLoaiThuoc.getItemCount() > 0)
+            cboLoaiThuoc.setSelectedIndex(0);
         sorterThuoc.setRowFilter(null);
         tblThuoc.clearSelection();
     }
 
     // ==========================================
-    // TAB 2: QUẢN LÝ LOẠI THUỐC (Giữ nguyên)
+    // TAB 2: QUẢN LÝ LOẠI THUỐC
     // ==========================================
     private JPanel taoTabLoaiThuoc() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
@@ -360,6 +455,7 @@ public class ThuocPanel extends JPanel {
         btnLamMoi.addActionListener(e -> {
             xoaFormLoai();
             taiDuLieuLoaiThuoc();
+            taiDanhSachLoaiThuocCombo();
         });
         btnTim.addActionListener(e -> {
             String kw = txtTimLoai.getText().trim();
@@ -389,21 +485,20 @@ public class ThuocPanel extends JPanel {
     }
 
     private void themLoai() {
-        if (txtTenLoai.getText().trim().isEmpty() || txtDVTLoai.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ tên loại và đơn vị tính!", "Cảnh báo",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
         try {
-            String payload = String.format("{\"TenLoai\":\"%s\",\"DonViTinh\":\"%s\"}", txtTenLoai.getText().trim(),
-                    txtDVTLoai.getText().trim());
+            String payload = String.format("{\"TenLoai\":\"%s\",\"DonViTinh\":\"%s\"}",
+                    esc(txtTenLoai.getText().trim()),
+                    esc(txtDVTLoai.getText().trim()));
             String res = ApiClient.sendPost("/loai-thuoc", payload);
             if (res.contains("\"success\":true")) {
                 JOptionPane.showMessageDialog(this, "Thêm loại thuốc thành công!");
                 taiDuLieuLoaiThuoc();
+                taiDanhSachLoaiThuocCombo();
                 xoaFormLoai();
             } else {
-                JOptionPane.showMessageDialog(this, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                String msg = extractVal(res, "message");
+                JOptionPane.showMessageDialog(this, msg.isEmpty() ? "Thêm thất bại!" : msg, "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Lỗi kết nối server!");
@@ -418,15 +513,20 @@ public class ThuocPanel extends JPanel {
             return;
         }
         try {
-            String payload = String.format("{\"TenLoai\":\"%s\",\"DonViTinh\":\"%s\"}", txtTenLoai.getText().trim(),
-                    txtDVTLoai.getText().trim());
+            String payload = String.format("{\"TenLoai\":\"%s\",\"DonViTinh\":\"%s\"}",
+                    esc(txtTenLoai.getText().trim()),
+                    esc(txtDVTLoai.getText().trim()));
             String res = ApiClient.sendPut("/loai-thuoc/" + id, payload);
             if (res.contains("\"success\":true")) {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
                 taiDuLieuLoaiThuoc();
+                taiDanhSachLoaiThuocCombo();
+                taiDuLieuThuoc();
                 xoaFormLoai();
             } else {
-                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                String msg = extractVal(res, "message");
+                JOptionPane.showMessageDialog(this, msg.isEmpty() ? "Cập nhật thất bại!" : msg, "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Lỗi kết nối server!");
@@ -448,9 +548,12 @@ public class ThuocPanel extends JPanel {
             if (res.contains("\"success\":true")) {
                 JOptionPane.showMessageDialog(this, "Xóa thành công!");
                 taiDuLieuLoaiThuoc();
+                taiDanhSachLoaiThuocCombo();
                 xoaFormLoai();
             } else {
-                JOptionPane.showMessageDialog(this, "Xóa thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                String msg = extractVal(res, "message");
+                JOptionPane.showMessageDialog(this, msg.isEmpty() ? "Xóa thất bại!" : msg, "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Lỗi kết nối server!");
