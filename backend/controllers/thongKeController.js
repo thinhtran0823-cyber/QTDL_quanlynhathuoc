@@ -55,5 +55,56 @@ const getDoanhThu = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+const getChiTietXuatExcel = async (req, res) => {
+    const { loai, giaTri } = req.query;
+    try {
+        let whereClause = '';
+        let params = [];
 
-module.exports = { getLoiNhuan, getDoanhThu };
+        if (loai === 'NGAY') {
+            // giaTri: YYYY-MM-DD
+            whereClause = 'WHERE DATE(hd.NgayLap) = ?';
+            params = [giaTri];
+        } else if (loai === 'THANG') {
+            // giaTri: YYYY-MM
+            whereClause = "WHERE DATE_FORMAT(hd.NgayLap, '%Y-%m') = ?";
+            params = [giaTri];
+        } else if (loai === 'NAM') {
+            // giaTri: YYYY
+            whereClause = 'WHERE YEAR(hd.NgayLap) = ?';
+            params = [Number(giaTri)];
+        } else {
+            return res.status(400).json({ success: false, message: 'Định dạng thời gian không hợp lệ (NGAY, THANG, NAM)' });
+        }
+
+        const [rows] = await pool.query(`
+            SELECT 
+                hd.MaHD,
+                DATE_FORMAT(hd.NgayLap, '%d/%m/%Y %H:%i:%s') AS NgayLap,
+                nv.HoTen AS TenNV,
+                COALESCE(kh.TenKH, 'Khách vãng lai') AS TenKH,
+                hd.TongTien AS TongTienHD,
+                t.TenThuoc,
+                COALESCE(t.DonViTinh, '') AS DonViTinh,
+                lt.SoLo,
+                DATE_FORMAT(lt.HanSuDung, '%d/%m/%Y') AS HanSuDung,
+                ct.SoLuongBan,
+                ct.GiaBan,
+                ct.ThanhTien
+            FROM HoaDon hd
+            JOIN NhanVien nv ON hd.MaNV = nv.MaNV
+            LEFT JOIN KhachHang kh ON hd.MaKH = kh.MaKH
+            JOIN ChiTietHoaDon ct ON hd.MaHD = ct.MaHD
+            JOIN LoThuoc lt ON ct.MaLo = lt.MaLo
+            JOIN Thuoc t ON lt.MaThuoc = t.MaThuoc
+            ${whereClause}
+            ORDER BY hd.NgayLap DESC, hd.MaHD DESC, ct.MaCTHD ASC
+        `, params);
+
+        return res.status(200).json({ success: true, data: rows });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+module.exports = { getLoiNhuan, getDoanhThu, getChiTietXuatExcel };
